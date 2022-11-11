@@ -1,0 +1,18 @@
+---
+
+nfs_resources_folder: /mnt
+nfs_service_folder: /etc/systemd/system
+
+nfs_resources:
+  - name: "Video"
+    src: 192.168.0.105:/i-data/c2854245/video
+    dest: "{{ nfs_resources_folder }}/videos"
+    filename: "{{ nfs_resources_folder[1:] }}-videos"
+  - name: "Music"
+    src: 192.168.0.105:/i-data/c2854245/music
+    dest: "{{ nfs_resources_folder }}/music"
+    filename: "{{ nfs_resources_folder[1:] }}-music"
+  - name: "Personal"
+    src: 192.168.0.105:/i-data/c2854245/lucalimardo
+    dest: "{{ nfs_resources_folder }}/personal"
+    filename: "{{ nfs_resources_folder[1:] }}-personal"

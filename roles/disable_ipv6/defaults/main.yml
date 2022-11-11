@@ -1,0 +1,11 @@
+---
+
+disable_ipv4_rules:
+  banana:
+    path: /boot/boot.ini
+    regexp: '^(setenv bootargs)(?!.*ipv6\.disable=1)(.*)"$'
+    replace: '\1\2 ipv6.disable=1"'
+  raspberry:
+    path: /boot/firmware/cmdline.txt
+    regexp: '^(console=)(?!.*ipv6\.disable=1)(.*)$'
+    replace: '\1\2 ipv6.disable=1'

@@ -1,0 +1,5 @@
+<lircmap>
+    <remote device="devinput">
+        <power>KEY_SUSPEND</power>
+    </remote>
+</lircmap>

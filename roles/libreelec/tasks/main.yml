@@ -1,0 +1,9 @@
+---
+
+- name: Setting LibreELEC
+  ansible.builtin.include_tasks: os.yml
+  when: ansible_distribution == "LibreELEC"
+
+- name: Setting Kodi
+  ansible.builtin.include_tasks: kodi.yml
+  when: ansible_distribution == "LibreELEC"

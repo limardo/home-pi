@@ -1,0 +1,17 @@
+[Unit]
+Description=Mount {{ nfs_item.name }} share
+Requires=network-online.target
+After=network-online.target
+{% if ansible_distribution == "LibreELEC" %}
+Before=kodi.service
+{% endif %}
+
+[Mount]
+What={{ nfs_item.src }}
+Where={{ nfs_item.dest }}
+Options=auto
+Type=nfs
+TimeoutSec=60
+
+[Install]
+WantedBy=multi-user.target

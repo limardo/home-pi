@@ -1,0 +1,7 @@
+---
+
+- name: Install Kubernetes control planes
+  import_playbook: luclim.kubernetes.control_plane
+
+- name: Install Kubernetes nodes
+  import_playbook: luclim.kubernetes.node

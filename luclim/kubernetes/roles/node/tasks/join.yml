@@ -1,0 +1,18 @@
+---
+
+- name: Reset Kubernetes component
+  ansible.builtin.command: |
+    kubeadm reset --force \
+    --cri-socket=unix:///var/run/containerd/containerd.sock
+  register: reset_cluster
+
+- name: Join to Kubernetes cluster
+  environment:
+    no_proxy: "$no_proxy,.svc,.svc.cluster.local"
+  ansible.builtin.command: |
+    kubeadm join \
+      --token={{ token }} \
+      --discovery-token-unsafe-skip-ca-verification \
+      --cri-socket=unix:///var/run/containerd/containerd.sock \
+      192.168.0.106:6443
+  when: reset_cluster is succeeded

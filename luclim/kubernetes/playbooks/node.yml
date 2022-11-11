@@ -1,0 +1,8 @@
+---
+
+- name: Kubernetes Node
+  hosts: kubernetes_nodes
+  become: true
+  roles:
+    - containerd
+    - node

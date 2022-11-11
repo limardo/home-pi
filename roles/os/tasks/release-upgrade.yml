@@ -1,0 +1,22 @@
+---
+
+- name: Ensure update-manager-core is installed
+  ansible.builtin.apt:
+    name: update-manager-core
+    state: present
+
+- name: Check do-release-upgrade
+  ansible.builtin.command:
+    cmd: do-release-upgrade -f DistUpgradeViewNonInteractive -c -q
+  register: release_upgrade
+  changed_when: release_upgrade.stdout is match('New release .* available')
+  failed_when: release_upgrade.rc != 0 and release_upgrade.rc != 1
+
+- name: Run do-release-upgrade non-interactively
+  ansible.builtin.command:
+    cmd: do-release-upgrade -f DistUpgradeViewNonInteractive --allow-third-party
+  when: release_upgrade.changed
+
+- name: Reboot the machine
+  ansible.builtin.reboot:
+  when: release_upgrade.changed

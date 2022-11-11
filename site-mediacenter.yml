@@ -1,0 +1,8 @@
+---
+
+- name: Mediacenter
+  become: true
+  hosts: mediacenter
+  roles:
+    - nfs
+    - libreelec

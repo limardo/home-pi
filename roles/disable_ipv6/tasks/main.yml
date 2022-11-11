@@ -1,0 +1,10 @@
+---
+
+- name: Add ipv6.disable in boot command
+  ansible.builtin.replace:
+    path: "{{ disable_ipv4_rules[custom_hostname].path }}"
+    regexp: "{{ disable_ipv4_rules[custom_hostname].regexp }}"
+    replace: "{{ disable_ipv4_rules[custom_hostname].replace }}"
+  when: custom_hostname is defined
+  notify:
+    - Reboot machine

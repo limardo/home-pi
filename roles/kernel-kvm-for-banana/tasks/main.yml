@@ -1,0 +1,15 @@
+---
+
+- name: Copy deb package in tmp
+  ansible.builtin.copy:
+    src: bpi-m5-bsp_20230124-1_arm64.deb
+    dest: /tmp/bpi-m5-bsp_20230124-1_arm64.deb
+
+- name: Install Kernel with KVM module
+  ansible.builtin.apt:
+    deb: /tmp/bpi-m5-bsp_20230124-1_arm64.deb
+  register: update_kernel
+
+- name: Reboot the machine
+  ansible.builtin.reboot:
+  when: update_kernel.changed

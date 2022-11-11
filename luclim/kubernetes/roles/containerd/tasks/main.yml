@@ -1,0 +1,51 @@
+---
+
+- name: Install containerd
+  ansible.builtin.apt:
+    name:
+      - containerd
+      - runc
+    state: present
+
+- name: Check if config file exists
+  ansible.builtin.stat:
+    path: "/etc/containerd/config.toml"
+  register: containerd_config_file_check
+
+- name: Create containerd folder
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    owner: root
+    group: root
+    mode: "755"
+  when: not containerd_config_file_check.stat.exists
+
+- name: Generate default config
+  ansible.builtin.command: containerd config default
+  register: containerd_config_default
+  when: not containerd_config_file_check.stat.exists
+
+- name: Prepare containerd/config.toml from default config
+  ansible.builtin.copy:
+    dest: /etc/containerd/config.toml
+    content: "{{ containerd_config_default.stdout }}"
+  when: not containerd_config_file_check.stat.exists
+
+- name: Enable cgroup driver
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
+    after:
+      '[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]'
+    regexp: '(SystemdCgroup\s=\s)(.+)'
+    replace: '\1true'
+
+- name: Upgrade containerd
+  ansible.builtin.include_tasks: upgrade.yml
+  tags:
+    - test
+
+- name: Restart service containerd
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted

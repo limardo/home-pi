@@ -1,0 +1,14 @@
+---
+
+- name: Download and unarchive release 1.6.x
+  ansible.builtin.unarchive:
+    src:
+      https://github.com/containerd/containerd/releases/download/v1.6.15/containerd-1.6.15-linux-arm64.tar.gz
+    dest: /tmp
+    remote_src: true
+
+- name: Install release 1.6.x
+  ansible.builtin.copy:
+    src: /tmp/bin/
+    dest: /usr/bin
+    remote_src: true

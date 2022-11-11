@@ -1,0 +1,8 @@
+---
+
+- name: Raspberry
+  become: true
+  hosts: raspberry
+  roles:
+    - disable_ipv6
+    - swap

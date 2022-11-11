@@ -1,0 +1,38 @@
+---
+
+- name: Update and upgrade apt packages
+  ansible.builtin.apt:
+    upgrade: "dist"
+    update_cache: true
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Check if reboot required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Reboot the machine
+  ansible.builtin.reboot:
+  when: reboot_required_file.stat.exists
+
+- name: Install latest os release
+  ansible.builtin.include_tasks: release-upgrade.yml
+  when: release_upgrade
+
+- name: Remove unused dependency packages
+  ansible.builtin.apt:
+    autoremove: true
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Cleans the local repository of retrieved package
+  ansible.builtin.apt:
+    autoclean: true
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Set a hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"
+
+- name: Set timezone to Europe/Rome
+  community.general.timezone:
+    name: Europe/Rome

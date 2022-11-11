@@ -1,0 +1,8 @@
+---
+
+- name: Kubernetes Control Plane
+  hosts: kubernetes_control_planes
+  become: true
+  roles:
+    - master
+    - cni

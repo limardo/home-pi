@@ -1,0 +1,20 @@
+---
+
+- name: Pi boards
+  become: true
+  hosts:
+    - raspberry
+    - banana
+  roles:
+    - sudo
+    - os
+    - nfs
+
+- name: Playbook Raspberry
+  import_playbook: site-raspberry.yml
+
+- name: Playbook Mediacenter
+  import_playbook: site-mediacenter.yml
+
+- name: Install Kubernetes
+  import_playbook: site-kubernetes.yml

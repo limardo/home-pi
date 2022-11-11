@@ -1,0 +1,19 @@
+---
+# For use with pre-commit.
+# See usage instructions at http://pre-commit.com
+
+- id: ansible-lint
+  name: Check ansible-lint
+  description: This hook runs ansible-lint.
+  entry: ansible-lint --force-color
+  files: \.(yaml|yml)$
+  language: python
+  pass_filenames: false
+  additional_dependencies:
+    - .[community,yamllint]
+
+- id: yamllint
+  entry: yamllint --strict
+  files: \.(yaml|yml)$
+  language: python
+  types: [file, yaml]

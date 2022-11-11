@@ -1,0 +1,10 @@
+---
+
+# General
+release_upgrade: false
+
+# Kubernetes
+token: n8cgb4.4qel9q96fn3d05hc
+service_cidr: "10.96.0.0/12"
+pod_network_cidr: "10.244.0.0/16"
+kubeadmin_config: /etc/kubernetes/admin.conf

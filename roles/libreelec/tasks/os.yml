@@ -1,0 +1,29 @@
+---
+
+- name: Set userdata hostname
+  ansible.builtin.replace:
+    path:
+      /storage/.kodi/userdata/addon_data/service.libreelec.settings/oe_settings.xml
+    regexp: "(<hostname>).*(<\/hostname>)"
+    replace: '\1{{ hostname }}\2'
+
+- name: Set cache hostname
+  ansible.builtin.copy:
+    dest: /storage/.cache/hostname
+    content: "{{ hostname }}"
+
+- name: Custom ir keymaps
+  ansible.builtin.copy:
+    src: formuler_f4.toml
+    dest: /storage/.config/rc_keymaps/formuler_f4.toml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Set rc config
+  ansible.builtin.copy:
+    src: rc_maps.cfg
+    dest: /storage/.config/rc_maps.cfg
+    owner: root
+    group: root
+    mode: '0644'

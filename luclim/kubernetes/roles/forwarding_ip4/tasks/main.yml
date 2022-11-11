@@ -1,0 +1,31 @@
+---
+
+- name: Add module config
+  ansible.builtin.copy:
+    src: module-k8s.conf
+    dest: /etc/modules-load.d/k8s.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Add sysctl config
+  ansible.builtin.copy:
+    src: sysctl-k8s.conf
+    dest: /etc/sysctl.d/99-k8s.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Load modules
+  community.general.modprobe:
+    name: "{{ module_item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+  loop_control:
+    loop_var: module_item
+
+- name: Reload sysctl
+  ansible.builtin.command:
+    cmd: sysctl --system

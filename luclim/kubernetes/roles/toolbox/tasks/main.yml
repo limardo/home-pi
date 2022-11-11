@@ -1,0 +1,61 @@
+---
+
+- name: Install K8s dependencies
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+    state: present
+
+- name: Prepare keyrings folder
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Add K8s APT GPG key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+    keyring: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+- name: Add K8s APT repository
+  apt_repository:
+    repo:
+      # yamllint disable-line rule:line-length
+      "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+    state: present
+    filename: 'kubernetes'
+
+- name: Install K8s toolbox
+  ansible.builtin.apt:
+    name:
+      - kubelet=1.25.5-00
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: true
+
+- name: Hold K8s toolbox
+  ansible.builtin.dpkg_selections:
+    name: "{{ package }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+  loop_control:
+    loop_var: package
+
+- name: Enable kubeadm completion
+  ansible.builtin.lineinfile:
+    dest: /home/pi/.bashrc
+    line: "source <(kubeadm completion bash)"
+
+- name: Enable kubectl completion
+  ansible.builtin.lineinfile:
+    dest: /home/pi/.bashrc
+    line: "source <(kubectl completion bash)"

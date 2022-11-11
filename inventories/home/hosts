@@ -1,0 +1,14 @@
+[raspberry]
+192.168.0.109 hostname=raspberry-1
+
+[banana]
+192.168.0.108 hostname=banana-1
+
+[mediacenter]
+192.168.0.106 hostname=kodi-1
+
+[kubernetes_control_planes:children]
+raspberry
+
+[kubernetes_nodes:children]
+banana

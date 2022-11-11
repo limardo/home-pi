@@ -1,0 +1,13 @@
+<settings version="2">
+    <setting id="autocomplete_lang">it</setting>
+    <setting id="autocomplete_lang_local" default="true">en</setting>
+    <setting id="autocomplete_provider" default="true">youtube</setting>
+    <setting id="classic_search" default="true">false</setting>
+    <setting id="first_start_infodialog" default="true">True</setting>
+    <setting id="force_native_layout" default="true">false</setting>
+    <setting id="include_adults" default="true">false</setting>
+    <setting id="infodialog_onclick">true</setting>
+    <setting id="LanguageID">it</setting>
+    <setting id="tmdb_password" default="true"/>
+    <setting id="tmdb_username" default="true"/>
+</settings>

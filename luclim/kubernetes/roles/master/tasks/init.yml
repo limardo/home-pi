@@ -1,0 +1,37 @@
+---
+
+- name: Reset K8s component
+  ansible.builtin.command: |
+    kubeadm reset --force \
+    --cri-socket=unix:///var/run/containerd/containerd.sock
+  register: reset_cluster
+
+- name: Init K8s cluster
+  environment:
+    no_proxy: "$no_proxy,.svc,.svc.cluster.local"
+  ansible.builtin.command: |
+    kubeadm init \
+      --node-name {{ custom_hostname }}
+      --service-cidr {{ service_cidr }} \
+      --pod-network-cidr {{ pod_network_cidr }} \
+      --token {{ token }} \
+      --cri-socket=unix:///var/run/containerd/containerd.sock \
+      --ignore-preflight-errors=Mem
+  register: init_cluster
+  when: reset_cluster is succeeded
+
+- name: Create Kubernetes config directory
+  ansible.builtin.file:
+    path: ".kube/"
+    state: directory
+  when: init_cluster is succeeded
+
+- name: Copy admin.conf to Home directory
+  ansible.builtin.copy:
+    src: "{{ kubeadmin_config }}"
+    dest: ".kube/config"
+    owner: "{{ ansible_user | default(ansible_user_id) }}"
+    group: "{{ ansible_user | default(ansible_user_id) }}"
+    mode: 0755
+    remote_src: true
+  when: init_cluster is succeeded

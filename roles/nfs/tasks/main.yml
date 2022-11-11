@@ -1,0 +1,44 @@
+---
+
+- name: NFS dependencies
+  ansible.builtin.apt:
+    name:
+      - nfs-common
+      - nfs4-acl-tools
+    state: present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Check mountpoint exist
+  ansible.builtin.file:
+    path: "{{ nfs_item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "777"
+  loop: "{{ nfs_resources | map(attribute='dest') }}"
+  loop_control:
+    loop_var: nfs_item
+
+- name: Create mount service file
+  ansible.builtin.template:
+    src: nfs-share.j2
+    dest: "{{ nfs_service_folder }}/{{ nfs_item.filename }}.mount"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ nfs_resources }}"
+  loop_control:
+    loop_var: nfs_item
+
+- name: Reload systemd configs
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable mount service
+  ansible.builtin.systemd:
+    name: "{{ nfs_item }}.mount"
+    state: started
+    enabled: true
+  loop: "{{ nfs_resources | map(attribute='filename') }}"
+  loop_control:
+    loop_var: nfs_item

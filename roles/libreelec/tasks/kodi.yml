@@ -1,0 +1,63 @@
+---
+
+- name: Add Kodi settings
+  ansible.builtin.copy:
+    src: "{{ kodi_setting }}"
+    dest: "/storage/.kodi/userdata/{{ kodi_setting }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - advancedsettings.xml
+    - sources.xml
+    - profiles.xml
+  loop_control:
+    loop_var: kodi_setting
+
+- name: Crate Kodi addon settings directory
+  ansible.builtin.file:
+    path: "/storage/.kodi/userdata/addon_data/{{ kodi_addon_setting }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - metadata.themoviedb.org
+    - script.globalsearch
+    - script.extendedinfo
+    - skin.estuary
+  loop_control:
+    loop_var: kodi_addon_setting
+
+- name: Add Kodi addon settings
+  ansible.builtin.copy:
+    src: "{{ kodi_addon_setting.src }}"
+    dest: "/storage/.kodi/userdata/addon_data/{{ kodi_addon_setting.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - src: metadata.themoviedb.org.settings.xml
+      dest: metadata.themoviedb.org/settings.xml
+    - src: script.globalsearch.settings.xml
+      dest: script.globalsearch/settings.xml
+    - src: script.extendedinfo.settings.xml
+      dest: script.extendedinfo/settings.xml
+    - src: skin.estuary.settings.xml
+      dest: skin.estuary/settings.xml
+  loop_control:
+    loop_var: kodi_addon_setting
+
+- name: Add Kodi lirc keymap
+  ansible.builtin.copy:
+    src: lircmap.xml
+    dest: /storage/.kodi/userdata/Lircmap.xml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Add Kodi keymap
+  ansible.builtin.copy:
+    src: keymaps.xml
+    dest: /storage/.kodi/userdata/keymaps/formuler_f4.xml
+    owner: root
+    group: root
+    mode: '0644'

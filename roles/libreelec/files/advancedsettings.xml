@@ -1,0 +1,27 @@
+<advancedsettings version="1.0">
+    <addons>
+        <unknownsources>true</unknownsources>
+    </addons>
+    <powermanagement>
+        <wakeonaccess>true</wakeonaccess>
+    </powermanagement>
+    <services>
+        <zeroconf>true</zeroconf>
+        <esallinterfaces>true</esallinterfaces>
+        <webserver>true</webserver>
+        <webserverport>8080</webserverport>
+        <webserverauthentication>true</webserverauthentication>
+        <webserverusername>kodi</webserverusername>
+        <webserverpassword>kodi</webserverpassword>
+        <upnp>true</upnp>
+    </services>
+    <locale>
+        <language>resource.language.it_it</language>
+    </locale>
+    <videolibrary>
+        <updateonstartup>true</updateonstartup>
+    </videolibrary>
+    <musiclibrary>
+        <updateonstartup>true</updateonstartup>
+    </musiclibrary>
+</advancedsettings>

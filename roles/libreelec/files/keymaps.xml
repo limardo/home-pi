@@ -1,0 +1,7 @@
+<keymap>
+    <global>
+        <remote>
+            <power>Hibernate()</power>
+        </remote>
+    </global>
+</keymap>

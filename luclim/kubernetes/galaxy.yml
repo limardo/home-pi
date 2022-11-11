@@ -1,0 +1,19 @@
+---
+
+namespace: luclim
+
+name: kubernetes
+
+version: 1.0.0
+
+readme: README.md
+
+authors:
+  - Luca Limardo <lucalimardo@yahoo.it>
+
+description: Kubernetes collection for Pi boards
+
+license:
+  - GPL-2.0-or-later
+
+repository: http://example.com/repository

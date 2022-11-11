@@ -1,0 +1,8 @@
+---
+
+collections:
+  - name: community.general
+  - name: kubernetes.core
+  - name: luclim.kubernetes
+    source: ./luclim/kubernetes
+    type: dir
