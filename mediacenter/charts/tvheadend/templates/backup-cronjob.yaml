@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}-backup
+  labels:
+    {{- include "mediacenter.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        # No selectorLabels: the tvheadend Service must not select these pods
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          containers:
+            - name: backup
+              image: {{ .Values.backup.image }}
+              env:
+                - name: RETENTION
+                  value: {{ .Values.backup.retention | quote }}
+              # tvheadend backs up its config only when its version changes: this is the nightly copy
+              command:
+                - sh
+                - -c
+                - |
+                  set -eu
+                  file=/backup/tvheadend-$(date +%F).tar.gz
+                  tar -czf "$file.tmp" -C /config \
+                    --exclude=./imagecache --exclude=./epgdb.v3 --exclude=./data \
+                    --exclude=./backup --exclude=./.lock .
+                  mv "$file.tmp" "$file"
+                  echo "ok $(basename "$file") $(du -h "$file" | cut -f1)"
+                  # A failed run stops above, so it never prunes complete backups
+                  ls -1 /backup/tvheadend-????-??-??.tar.gz | sort -r | tail -n +$((RETENTION + 1)) | while read -r f; do
+                    rm -f "$f"; echo "removed $(basename "$f")"
+                  done
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  memory: 64Mi
+              volumeMounts:
+                - name: data
+                  mountPath: /config
+                  subPath: config
+                  readOnly: true
+                - name: backup
+                  mountPath: /backup
+          volumes:
+            - name: data
+              nfs:
+                server: {{ .Values.global.nfs.server }}
+                path: {{ .Values.nfs.path }}
+                readOnly: true
+            - name: backup
+              nfs:
+                server: {{ .Values.global.nfs.server }}
+                path: {{ .Values.backup.nfsPath }}

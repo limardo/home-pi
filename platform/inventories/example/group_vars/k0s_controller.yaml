@@ -1,0 +1,4 @@
+---
+
+backup_nfs_server: 192.168.x.x
+backup_nfs_path: /path/to/backups/k0s

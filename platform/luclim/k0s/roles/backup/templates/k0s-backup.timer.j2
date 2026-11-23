@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly k0s backup to the NAS
+
+[Timer]
+OnCalendar={{ backup_schedule }}
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target

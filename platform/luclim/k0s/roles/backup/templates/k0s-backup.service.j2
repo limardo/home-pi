@@ -1,0 +1,10 @@
+[Unit]
+Description=k0s backup to the NAS
+After=k0scontroller.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/k0s-backup
+Nice=10
+IOSchedulingClass=idle

@@ -194,6 +194,29 @@
       "items": {
         "type": "object"
       }
+    },
+    "backup": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schedule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "nfsPath": {
+          "type": "string",
+          "pattern": "^/(.*/)?[Bb][Aa][Cc][Kk][Uu][Pp][Ss](/.*)?$"
+        }
+      },
+      "required": [
+        "schedule",
+        "count",
+        "nfsPath"
+      ]
     }
   },
   "required": [
@@ -208,6 +231,7 @@
     "livenessProbe",
     "readinessProbe",
     "nodeSelector",
-    "tolerations"
+    "tolerations",
+    "backup"
   ]
 }

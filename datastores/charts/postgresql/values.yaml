@@ -41,8 +41,8 @@ resources:
 
 backup:
   schedule: '0 3 * * *'
-  retentionDays: 7
-  nfsPath: /path/to/postgresql
+  retention: 7
+  nfsPath: /path/to/backups/postgresql
 
 probe:
   url: postgresql-rw.{{ .Release.Namespace }}.svc.cluster.local:5432

@@ -45,6 +45,12 @@ spec:
               value: {{ (first .Values.service).port | quote }}
             - name: ND_SCANNER_SCHEDULE
               value: {{ .Values.scanSchedule | quote }}
+            - name: ND_BACKUP_PATH
+              value: /backups
+            - name: ND_BACKUP_SCHEDULE
+              value: {{ .Values.backup.schedule | quote }}
+            - name: ND_BACKUP_COUNT
+              value: {{ .Values.backup.count | quote }}
             {{- with .Values.metrics }}
             - name: ND_PROMETHEUS_ENABLED
               value: "true"
@@ -71,6 +77,8 @@ spec:
             - name: music
               mountPath: /music
               readOnly: true
+            - name: backups
+              mountPath: /backups
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -80,3 +88,7 @@ spec:
             server: {{ .Values.global.nfs.server }}
             path: {{ .Values.nfs.musicPath }}
             readOnly: true
+        - name: backups
+          nfs:
+            server: {{ .Values.global.nfs.server }}
+            path: {{ .Values.backup.nfsPath }}

@@ -34,6 +34,8 @@ In `inventories/home/hosts`, list your machines in the `minipc`, `raspberry` and
 | `os_data_disk_mount` | host | Its mount point (default `/srv/data`) |
 | `os_cpu_max_freq` | host | Optional CPU frequency cap in kHz (default `0`, no cap) |
 | `worker_profile` | `k0s_worker` host | k0s worker profile, defined in `luclim/k0s/roles/controller/templates/k0s.yaml.j2` |
+| `backup_nfs_server` / `backup_nfs_path` | `group_vars/k0s_controller.yaml` | NFS share for the nightly `k0s backup` of the controller |
+| `backup_schedule` / `backup_retention` | `group_vars/k0s_controller.yaml` | systemd `OnCalendar` (default 02:30) and archives kept (default 7, at least 3) |
 
 ## Deploy
 
@@ -58,4 +60,5 @@ It grants full admin access to the cluster: keep it out of the repository.
 - **Add a board**: add it to the inventory and to `k0s_worker`, then run `check` and `deploy`.
 - **Upgrade k0s**: change `k0s_version`, then run `check` and `deploy`.
 - **Change the cluster configuration** (worker profiles, MetalLB, Prometheus): edit `k0s.yaml.j2`, then `deploy`.
+- **Back up the cluster**: the controller runs `k0s backup` every night (timer `k0s-backup.timer`), mounting the NFS share only for the backup. Run one now with `sudo systemctl start k0s-backup.service`; restore on a clean controller with `k0s restore <archive>`.
 - **ansible-lint fails on commit**: `moon run platform:fix` fixes what it can.

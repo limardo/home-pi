@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+
+mnt=$(mktemp -d)
+cleanup() {
+  umount "$mnt" 2>/dev/null || true
+  rmdir "$mnt"
+}
+trap cleanup EXIT
+
+# Mounted only for the backup, soft: a NAS outage must never hang the controller
+mount -t nfs -o vers=3,soft,timeo=100,retrans=3 {{ backup_nfs_server }}:{{ backup_nfs_path }} "$mnt"
+
+# Written in a temporary folder, so a failed run leaves no partial archive
+mkdir -p "$mnt/.tmp"
+rm -f "$mnt"/.tmp/*
+/usr/local/bin/k0s backup --save-path "$mnt/.tmp"
+mv "$mnt"/.tmp/k0s_backup_*.tar.gz "$mnt"/
+rmdir "$mnt/.tmp"
+
+ls -1t "$mnt"/k0s_backup_*.tar.gz | tail -n +{{ backup_retention + 1 }} | xargs -r rm -f
+echo "k0s backup done, $(ls -1 "$mnt"/k0s_backup_*.tar.gz | wc -l) archives kept"

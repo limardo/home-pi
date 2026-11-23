@@ -69,3 +69,11 @@ config:
 
 probe:
   url: http://jellyfin.{{ .Release.Namespace }}.svc.cluster.local:8096/health
+
+backup:
+  schedule: '15 4 * * *'
+  retention: 7
+  nfsPath: /path/to/backups/jellyfin
+  image: curlimages/curl:8.11.1
+  # Applied by hand: an API key created in Jellyfin for the backup
+  apikeySecret: jellyfin-backup-apikey

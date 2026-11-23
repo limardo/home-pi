@@ -13,10 +13,10 @@ global:
 
 postgresql:
   backup:
-    nfsPath: /path/to/postgresql   # one folder per day, one dump per database
+    nfsPath: /path/to/backups/postgresql   # one folder per day, one .sql.gz per database
 ```
 
-Schedule and retention are `postgresql.backup.schedule` and `postgresql.backup.retentionDays` in `charts/postgresql/values.yaml`.
+The path must contain a `backups` folder. Schedule and number of backups kept (at least 3) are `postgresql.backup.schedule` and `postgresql.backup.retention` in `charts/postgresql/values.yaml`; a failed run never removes complete backups.
 
 ## Deploy
 
@@ -36,12 +36,10 @@ Apps connect to `postgresql-rw.datastores.svc:5432`.
   kubectl -n datastores exec -it postgresql-1 -- psql
   ```
 
-- **Restore a database** from a dump on the NFS share:
+- **Restore a database** from a dump on the NFS share; the dump drops and recreates its objects:
 
   ```bash
-  kubectl -n datastores cp <db>.dump <primary pod>:/tmp/<db>.dump
-  kubectl -n datastores exec -it <primary pod> -- pg_restore --clean -d <db> /tmp/<db>.dump
-  kubectl -n datastores exec <primary pod> -- rm /tmp/<db>.dump
+  gunzip -c <db>.sql.gz | kubectl -n datastores exec -i <primary pod> -c postgres -- psql -v ON_ERROR_STOP=1 -d <db>
   ```
 
   The primary is the pod with `role=primary`: `kubectl -n datastores get pods -l role=primary`.

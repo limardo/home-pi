@@ -59,3 +59,8 @@ probe:
 
 metrics:
   path: /metrics
+
+backup:
+  schedule: '0 4 * * *'
+  count: 7
+  nfsPath: /path/to/backups/navidrome

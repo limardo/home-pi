@@ -9,6 +9,19 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "nfs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "server"
+          ]
+        },
         "blackbox": {
           "type": "object",
           "additionalProperties": false,

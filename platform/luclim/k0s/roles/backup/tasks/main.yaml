@@ -1,0 +1,36 @@
+---
+
+- name: Check the backup retention
+  ansible.builtin.assert:
+    that: backup_retention | int >= 3
+    fail_msg: backup_retention must keep at least 3 archives
+
+- name: Install the backup script
+  become: true
+  ansible.builtin.template:
+    src: k0s-backup.sh.j2
+    dest: /usr/local/sbin/k0s-backup
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Install the backup units
+  become: true
+  ansible.builtin.template:
+    src: '{{ item }}.j2'
+    dest: '/etc/systemd/system/{{ item }}'
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - k0s-backup.service
+    - k0s-backup.timer
+
+- name: Enable the backup timer
+  become: true
+  ansible.builtin.systemd:
+    name: k0s-backup.timer
+    state: started
+    enabled: true
+    daemon_reload: true
+  ignore_errors: '{{ ansible_check_mode }}'

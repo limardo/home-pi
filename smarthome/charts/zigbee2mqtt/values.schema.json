@@ -7,10 +7,24 @@
     "global": {
       "type": "object",
       "required": [
+        "nfs",
         "blackbox",
         "gateway"
       ],
       "properties": {
+        "nfs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "server"
+          ]
+        },
         "blackbox": {
           "type": "object",
           "additionalProperties": false,
@@ -212,6 +226,29 @@
           "type": "string"
         }
       }
+    },
+    "backup": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schedule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retention": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "nfsPath": {
+          "type": "string",
+          "pattern": "^/(.*/)?[Bb][Aa][Cc][Kk][Uu][Pp][Ss](/.*)?$"
+        }
+      },
+      "required": [
+        "schedule",
+        "retention",
+        "nfsPath"
+      ]
     }
   },
   "required": [
@@ -227,6 +264,7 @@
     "livenessProbe",
     "readinessProbe",
     "storage",
-    "probe"
+    "probe",
+    "backup"
   ]
 }

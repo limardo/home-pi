@@ -68,3 +68,9 @@ epg:
 
 probe:
   url: http://tvheadend.{{ .Release.Namespace }}.svc.cluster.local:9981/ping
+
+backup:
+  schedule: '30 4 * * *'
+  retention: 7
+  nfsPath: /path/to/backups/tvheadend
+  image: busybox:1.36.1

@@ -1,10 +1,14 @@
 {{- $gateway := .Values.global.gateway }}
+{{- $backupVolume := dict "name" "backups" "nfs" (dict "server" .Values.global.nfs.server "path" .Values.backup.nfsPath) }}
+{{- $backupMount := dict "name" "backups" "mountPath" "/config/data/backups" }}
 {{- $overrides := dict
   "jellyfin" (dict "env" (list (dict "name" "JELLYFIN_PublishedServerUrl" "value" (printf "http://%s" (first .Values.hostnames)))))
   "persistence" (dict "media" (dict "nfsServer" .Values.global.nfs.server))
   "httpRoute" (dict "hostnames" .Values.hostnames "parentRefs" (list (dict "name" $gateway.name "namespace" $gateway.namespace)))
   "nodeSelector" .Values.nodeSelector
   "tolerations" .Values.tolerations
+  "volumes" (append (.Values.config.volumes | default list) $backupVolume)
+  "volumeMounts" (append (.Values.config.volumeMounts | default list) $backupMount)
 }}
 apiVersion: helm.k0sproject.io/v1beta1
 kind: Chart

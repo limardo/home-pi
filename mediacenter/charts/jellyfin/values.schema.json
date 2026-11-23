@@ -101,6 +101,39 @@
       "items": {
         "type": "object"
       }
+    },
+    "backup": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schedule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retention": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "nfsPath": {
+          "type": "string",
+          "pattern": "^/(.*/)?[Bb][Aa][Cc][Kk][Uu][Pp][Ss](/.*)?$"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "apikeySecret": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "schedule",
+        "retention",
+        "nfsPath",
+        "image",
+        "apikeySecret"
+      ]
     }
   },
   "required": [
@@ -111,6 +144,7 @@
     "config",
     "hostnames",
     "nodeSelector",
-    "tolerations"
+    "tolerations",
+    "backup"
   ]
 }

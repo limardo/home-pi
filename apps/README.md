@@ -79,4 +79,5 @@ moon run apps:deploy
   ```
 
 - **Upgrade TRaSH Guides**: change `trashRevision` in `charts/configarr/values.yaml`, then build and update.
+- **Backups**: the *arr data lives in PostgreSQL and is covered by the nightly SQL dump of [datastores](../datastores/); their own weekly backups hold only `config.xml`, which the chart rebuilds.
 - **Remove the project**: `destroy` keeps the *arr databases in datastores, as well as the volumes.

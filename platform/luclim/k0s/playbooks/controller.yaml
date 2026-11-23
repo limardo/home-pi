@@ -4,3 +4,4 @@
   hosts: k0s_controller
   roles:
     - controller
+    - backup

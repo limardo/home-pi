@@ -1,5 +1,7 @@
 ---
 global:
+  nfs:
+    server: 192.168.x.x
   blackbox:
     prober: blackbox.example.local:9115
   gateway:
@@ -56,3 +58,8 @@ storage:
 
 probe:
   url: http://matterbridge.{{ .Release.Namespace }}.svc.cluster.local:8283
+
+backup:
+  schedule: '45 3 * * *'
+  retention: 7
+  nfsPath: /path/to/backups/matterbridge
