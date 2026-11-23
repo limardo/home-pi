@@ -1,0 +1,23 @@
+---
+image:
+  repository: ghcr.io/flaresolverr/flaresolverr
+  pullPolicy: IfNotPresent
+
+http:
+  port: 8191
+
+logLevel: info
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+
+probe:
+  url: http://flaresolverr.{{ .Release.Namespace }}.svc.cluster.local:8191/health

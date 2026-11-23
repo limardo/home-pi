@@ -1,0 +1,7 @@
+---
+global:
+  blackbox:
+    prober: prometheus-blackbox-exporter.kube-observability.svc:9115
+
+postgresql:
+  enabled: true

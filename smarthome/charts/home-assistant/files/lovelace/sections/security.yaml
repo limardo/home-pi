@@ -1,0 +1,103 @@
+type: grid
+cards:
+  - type: heading
+    heading: Sicurezza
+    heading_style: title
+    icon: mdi:shield-home
+  - type: picture-glance
+    camera_image: camera.camera_1_live_view
+    camera_view: live
+    fit_mode: cover
+    entity: switch.camera_1
+    entities:
+      - switch.camera_1
+  - type: heading
+    heading: Controlli camera
+    heading_style: subtitle
+    icon: mdi:camera-control
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: switch.camera_1_motion_detection
+        name: Rilevamento movimento
+        icon: mdi:motion-sensor
+      - entity: switch.camera_1_person_detection
+        name: Rilevamento persone
+        icon: mdi:account-eye
+      - entity: switch.camera_1_baby_cry_detection
+        name: Rilevamento pianto
+        icon: mdi:baby-face
+      - entity: switch.camera_1_led
+        name: LED
+        icon: mdi:led-on
+      - entity: sensor.camera_1_signal_level
+        name: Segnale WiFi
+        icon: mdi:wifi
+  - type: glance
+    title: Pan / Tilt
+    show_name: true
+    show_state: false
+    entities:
+      - entity: button.camera_1_pan_left
+        name: Sinistra
+        icon: mdi:arrow-left
+      - entity: button.camera_1_tilt_up
+        name: Su
+        icon: mdi:arrow-up
+      - entity: button.camera_1_tilt_down
+        name: Giu
+        icon: mdi:arrow-down
+      - entity: button.camera_1_pan_right
+        name: Destra
+        icon: mdi:arrow-right
+  - type: heading
+    heading: Persone
+    heading_style: subtitle
+    icon: mdi:account-group
+  - type: map
+    entities:
+      - device_tracker.iphone_di_luca
+      - device_tracker.iphone_di_luisa
+    theme_mode: auto
+  - type: picture-entity
+    entity: person.luca
+    show_state: true
+    show_name: false
+    camera_view: auto
+    fit_mode: cover
+    grid_options:
+      columns: 6
+      rows: 3
+  - type: picture-entity
+    entity: person.luisa
+    name: Luisa
+    show_state: true
+    show_name: false
+    camera_view: auto
+    fit_mode: cover
+    grid_options:
+      columns: 6
+      rows: 3
+  - type: glance
+    title: Attività
+    show_name: true
+    show_state: true
+    entities:
+      - entity: sensor.iphone_di_luca_activity
+        name: Attività Luca
+        icon: mdi:run
+      - entity: sensor.iphone_di_luca_steps
+        name: Passi Luca
+        icon: mdi:shoe-print
+      - entity: binary_sensor.iphone_di_luca_focus
+        name: Focus Luca
+        icon: mdi:focus-field
+      - entity: sensor.iphone_di_luisa_activity
+        name: Attività Luisa
+        icon: mdi:run
+      - entity: sensor.iphone_di_luisa_steps
+        name: Passi Luisa
+        icon: mdi:shoe-print
+      - entity: binary_sensor.iphone_di_luisa_focus
+        name: Focus Luisa
+        icon: mdi:focus-field

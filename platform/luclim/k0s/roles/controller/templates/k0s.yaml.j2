@@ -1,0 +1,289 @@
+---
+
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+metadata:
+  creationTimestamp: null
+  name: k0s
+spec:
+  api:
+    address: {{ ansible_facts['default_ipv4']['address'] }}
+    k0sApiPort: 9443
+    port: 6443
+    sans:
+      - {{ ansible_facts['default_ipv4']['address'] }}
+    extraArgs:
+      max-requests-inflight: "200"
+      max-mutating-requests-inflight: "100"
+      default-watch-cache-size: "50"
+      event-ttl: "1h"
+  controllerManager:
+    extraArgs:
+      kube-api-burst: "40"
+      kube-api-qps: "20"
+  extensions:
+    helm:
+      concurrencyLevel: 5
+      repositories:
+        - name: prometheus-community
+          url: https://prometheus-community.github.io/helm-charts
+        - name: metallb
+          url: https://metallb.github.io/metallb
+      charts:
+        - name: prometheus
+          chartname: prometheus-community/kube-prometheus-stack
+          version: "93.4.1"
+          namespace: kube-metrics
+          order: 2
+          values: |
+            grafana:
+              enabled: false
+
+            alertmanager:
+              enabled: false
+
+            prometheus:
+              prometheusSpec:
+                retention: 5d
+                retentionSize: 6GB
+                walCompression: true
+                scrapeInterval: "60s"
+                evaluationInterval: "60s"
+                nodeSelector:
+                  node-role.kubernetes.io/worker: "worker"
+                storageSpec:
+                  volumeClaimTemplate:
+                    spec:
+                      storageClassName: longhorn
+                      accessModes:
+                        - ReadWriteOnce
+                      resources:
+                        requests:
+                          storage: 8Gi
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 768Mi
+                  limits:
+                    cpu: 1000m
+                    memory: 2000Mi
+                containers:
+                  - name: prometheus
+                    livenessProbe:
+                      httpGet:
+                        path: /-/healthy
+                        port: 9090
+                        scheme: HTTP
+                      timeoutSeconds: 30
+                      failureThreshold: 10
+                      periodSeconds: 20
+                    readinessProbe:
+                      httpGet:
+                        path: /-/ready
+                        port: 9090
+                        scheme: HTTP
+                      timeoutSeconds: 30
+                      failureThreshold: 10
+                      periodSeconds: 20
+                    startupProbe:
+                      httpGet:
+                        path: /-/ready
+                        port: 9090
+                        scheme: HTTP
+                      timeoutSeconds: 30
+                      failureThreshold: 60
+                      periodSeconds: 15
+                ruleSelectorNilUsesHelmValues: false
+                serviceMonitorSelectorNilUsesHelmValues: false
+              # etcd, scheduler and controller-manager run inside k0s: their metrics come from the
+              # k0s pushgateway (--enable-metrics-scraper); honorLabels keeps job and instance
+              additionalServiceMonitors:
+                - name: k0s-pushgateway
+                  selector:
+                    matchLabels:
+                      app: k0s-observability
+                      component: pushgateway
+                  namespaceSelector:
+                    matchNames:
+                      - k0s-system
+                  endpoints:
+                    - port: http
+                      interval: 60s
+                      honorLabels: true
+                      metricRelabelings:
+                        - sourceLabels: [__name__]
+                          regex: (scheduler_plugin|workqueue|rest_client|grpc_server)_.*
+                          action: drop
+
+            # non raggiungibili su k0s: sostituiti dal pushgateway qui sopra
+            kubeEtcd:
+              enabled: false
+            kubeScheduler:
+              enabled: false
+            kubeControllerManager:
+              enabled: false
+
+            defaultRules:
+              rules:
+                etcd: false
+                kubeApiserverSlos: false
+                kubeControllerManager: false
+                kubeSchedulerAlerting: false
+                kubeSchedulerRecording: false
+                windows: false
+                # Alertmanager e' spento: gli alert sono regole Grafana. Per riattivarli rimetti a true
+                alertmanager: false
+                configReloaders: false
+                general: false
+                kubeProxy: false
+                kubeStateMetrics: false
+                kubernetesApps: false
+                kubernetesResources: false
+                kubernetesStorage: false
+                kubernetesSystem: false
+                network: false
+                nodeExporterAlerting: false
+                prometheus: false
+                prometheusOperator: false
+                # recording rules che servono solo agli SLO dell'apiserver: le piu' costose
+                kubeApiserverAvailability: false
+                kubeApiserverBurnrate: false
+
+            kube-state-metrics:
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  cpu: 100m
+                  memory: 192Mi
+
+            prometheus-node-exporter:
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 32Mi
+                limits:
+                  cpu: 50m
+                  memory: 64Mi
+
+            prometheusOperator:
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 200m
+                  memory: 512Mi
+              livenessProbe:
+                enabled: true
+                timeoutSeconds: 10
+                failureThreshold: 6
+              readinessProbe:
+                enabled: true
+                timeoutSeconds: 10
+                failureThreshold: 6
+        - name: metallb
+          chartname: metallb/metallb
+          version: "0.16.2"
+          namespace: kube-ingress
+          order: 3
+          values: |
+            prometheus:
+              # le metriche passano da kube-rbac-proxy: il chart autorizza il service account di Prometheus
+              serviceAccount: prometheus-kube-prometheus-prometheus
+              namespace: kube-metrics
+              serviceMonitor:
+                enabled: true
+            frrk8s:
+              enabled: false
+            speaker:
+              resources:
+                requests:
+                  memory: 64Mi
+                  cpu: 10m
+                limits:
+                  memory: 128Mi
+                  cpu: 100m
+            controller:
+              resources:
+                requests:
+                  memory: 64Mi
+                  cpu: 50m
+                limits:
+                  memory: 128Mi
+                  cpu: 200m
+  installConfig:
+    users:
+      etcdUser: etcd
+      kineUser: kube-apiserver
+      konnectivityUser: konnectivity-server
+      kubeAPIserverUser: kube-apiserver
+      kubeSchedulerUser: kube-scheduler
+  konnectivity:
+    adminPort: 8133
+    agentPort: 8132
+  network:
+    provider: kuberouter
+    podCIDR: 10.244.0.0/16
+    serviceCIDR: 10.96.0.0/12
+    clusterDomain: cluster.local
+    kuberouter:
+      autoMTU: true
+      peerRouterIPs: ""
+      peerRouterASNs: ""
+    kubeProxy:
+      ipvs:
+        strictARP: true
+        minSyncPeriod: 0s
+        syncPeriod: 0s
+        tcpFinTimeout: 0s
+        tcpTimeout: 0s
+        udpTimeout: 0s
+      metricsBindAddress: 0.0.0.0:10249
+      mode: ipvs
+    nodeLocalLoadBalancing:
+      enabled: true
+      type: EnvoyProxy
+    dualStack:
+      enabled: false
+      IPv6podCIDR: "fd00::/108"
+      IPv6serviceCIDR: "fd01::/108"
+  scheduler:
+    extraArgs:
+      kube-api-qps: "20"
+      kube-api-burst: "30"
+  storage:
+    type: etcd
+    etcd:
+      externalCluster: null
+      peerAddress: {{ ansible_facts['default_ipv4']['address'] }}
+      extraArgs:
+        quota-backend-bytes: "524288000"
+        auto-compaction-mode: periodic
+        auto-compaction-retention: "1"
+        heartbeat-interval: "500"
+        election-timeout: "5000"
+        snapshot-count: "5000"
+        max-wals: "3"
+  workerProfiles:
+    - name: bpi-m5
+      values:
+        evictionHard:
+          memory.available: "200Mi"
+          nodefs.available: "10%"
+        imageGCHighThresholdPercent: 85
+        imageGCLowThresholdPercent: 80
+    - name: minipc-1
+      values:
+        registerWithTaints:
+          - key: arch
+            value: amd64
+            effect: NoSchedule
+        evictionHard:
+          memory.available: "500Mi"
+          nodefs.available: "10%"
+        imageGCHighThresholdPercent: 85
+        imageGCLowThresholdPercent: 80
+  telemetry:
+    enabled: false

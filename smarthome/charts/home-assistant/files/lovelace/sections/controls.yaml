@@ -1,0 +1,76 @@
+type: grid
+cards:
+  - type: heading
+    heading: Luci
+    heading_style: title
+    icon: mdi:lightbulb-group
+  - type: tile
+    entity: switch.piantana
+    color: primary
+    state_content:
+      - state
+      - last_changed
+    vertical: false
+    features:
+      - type: toggle
+    features_position: inline
+  - type: tile
+    entity: switch.luce_switch_1
+    icon: mdi:ceiling-light
+    color: accent
+    vertical: false
+    features:
+      - type: toggle
+    features_position: inline
+  - type: heading
+    heading: Serrande
+    heading_style: subtitle
+    icon: mdi:window-shutter
+  - type: glance
+    title: Stato motori
+    show_name: true
+    show_state: true
+    entities:
+      - entity: sensor.serranda_motor_run_status
+        name: Serranda 1
+      - entity: sensor.serranda_motor_run_status_2
+        name: Serranda 2
+      - entity: sensor.serranda_motor_run_status_3
+        name: Serranda 3
+      - entity: sensor.serranda_motor_run_status_4
+        name: Serranda 4
+      - entity: sensor.serranda_motor_run_status_5
+        name: Serranda 5
+  - type: tile
+    entity: cover.serranda
+    state_content:
+      - state
+      - current_position
+    vertical: false
+    features:
+      - type: cover-position
+    features_position: inline
+  - type: tile
+    entity: cover.serranda_2
+    vertical: false
+    features:
+      - type: cover-position
+    features_position: inline
+  - type: tile
+    entity: cover.serranda_3
+    vertical: false
+    features:
+      - type: cover-position
+    features_position: inline
+  - type: tile
+    entity: cover.serranda_4
+    vertical: false
+    features:
+      - type: cover-position
+    features_position: inline
+  - type: tile
+    entity: cover.serranda_5
+    vertical: false
+    features:
+      - type: cover-position
+    features_position: inline

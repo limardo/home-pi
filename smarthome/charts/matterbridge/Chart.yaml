@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: matterbridge
+description: Matterbridge chart for SmartHome
+type: application
+version: 0.1.0
+appVersion: '3.11.4'

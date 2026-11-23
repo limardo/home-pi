@@ -1,0 +1,300 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+namespace: ''
+
+charts:
+  loki:
+    enabled: true
+    name: loki
+    chart: grafana-community/loki
+    repository: https://grafana-community.github.io/helm-charts
+    version: 18.14.0
+    forceUpgrade: false
+    storageClass:
+      name: loki-nfs
+      share: /path/to/loki
+      reclaimPolicy: Delete
+      mountOptions:
+        - nfsvers=3
+        - hard
+        - nolock
+    config:
+      loki:
+        auth_enabled: false
+
+        commonConfig:
+          replication_factor: 1
+
+        storage:
+          type: filesystem
+
+        schemaConfig:
+          configs:
+            - from: '2024-04-01'
+              store: tsdb
+              object_store: filesystem
+              schema: v13
+              index:
+                prefix: loki_index_
+                period: 24h
+
+        storage_config:
+          tsdb_shipper:
+            active_index_directory: /var/loki/tsdb-index
+            cache_location: /var/loki/tsdb-cache
+            cache_ttl: 24h
+          filesystem:
+            directory: /var/loki/chunks
+
+        compactor:
+          working_directory: /var/loki/compactor
+          delete_request_store: filesystem
+          compaction_interval: 2h
+          retention_enabled: true
+          retention_delete_delay: 2h
+          retention_delete_worker_count: 50
+
+        limits_config:
+          retention_period: 720h
+          ingestion_rate_mb: 4
+          ingestion_burst_size_mb: 8
+          max_query_parallelism: 2
+
+        ingester:
+          chunk_encoding: snappy
+          chunk_idle_period: 30m
+          max_chunk_age: 1h
+
+        querier:
+          max_concurrent: 2
+
+      singleBinary:
+        replicas: 1
+
+        persistence:
+          size: 20Gi
+
+        resources:
+          limits:
+            cpu: 1
+            memory: 768Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+
+        extraEnv:
+          - name: GOMEMLIMIT
+            value: 640MiB
+
+      monitoring:
+        serviceMonitor:
+          enabled: true
+          interval: 60s
+
+      lokiCanary:
+        enabled: false
+
+      # Required when the canary is disabled
+      test:
+        enabled: false
+
+      gateway:
+        enabled: false
+
+      resultsCache:
+        enabled: false
+
+      chunksCache:
+        enabled: false
+
+      backend:
+        replicas: 0
+      read:
+        replicas: 0
+      write:
+        replicas: 0
+
+      bloomCompactor:
+        replicas: 0
+
+  grafana:
+    enabled: true
+    name: grafana
+    chart: grafana-community/grafana
+    repository: https://grafana-community.github.io/helm-charts
+    version: 13.3.1
+    forceUpgrade: false
+    storageClass:
+      name: grafana-nfs
+      share: /path/to/grafana
+      reclaimPolicy: Retain
+      mountOptions:
+        - nfsvers=3
+        - hard
+    # Applied by hand from secrets/grafana-admin-secret.yaml
+    admin:
+      secretName: grafana-admin-secret
+    alertEmail: Admin <admin@example.com>
+    config:
+      deploymentStrategy:
+        type: Recreate
+
+      readinessProbe:
+        httpGet:
+          port: 3000
+        periodSeconds: 10
+        timeoutSeconds: 10
+        successThreshold: 1
+        failureThreshold: 6
+
+      livenessProbe:
+        httpGet:
+          port: 3000
+        periodSeconds: 10
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+
+      testFramework:
+        enabled: false
+
+      route:
+        main:
+          enabled: true
+
+          hostnames:
+            - grafana.example.local
+
+      persistence:
+        enabled: true
+        accessModes:
+          - ReadWriteMany
+        size: 2Gi
+        annotations:
+          helm.sh/resource-policy: keep
+
+      serviceMonitor:
+        enabled: true
+        interval: 60s
+        # Grafana's internal API server and feature toggles: ~2,000 unused series
+        metricRelabelings:
+          - sourceLabels: [__name__]
+            regex: grafana_(apiserver|storage_server_grpc)_.*|grafana_feature_toggles_info
+            action: drop
+
+      sidecar:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 50Mi
+          limits:
+            # At 100m the sidecars were throttled and loaded rules minutes late
+            cpu: 500m
+            memory: 100Mi
+        datasources:
+          enabled: true
+        alerts:
+          enabled: true
+          searchNamespace: ALL
+          # "both" reads every Secret in the cluster: OOM and apiserver load
+          resource: configmap
+
+      smtp:
+        existingSecret: 'google-smtp-secret'
+
+      grafana.ini:
+        database:
+          wal: false
+        feature_toggles:
+          provisioning: true
+          kubernetesDashboards: true
+        paths:
+          permitted_provisioning_paths: /var/lib/grafana/provisioning
+        smtp:
+          enabled: true
+          host: smtp.example.com:587
+          from_address: grafana@example.local
+
+  fluentBit:
+    enabled: true
+    name: fluent-bit
+    chart: fluent/fluent-bit
+    repository: https://fluent.github.io/helm-charts
+    version: 0.58.3
+    config:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+
+      tolerations: []
+
+      serviceMonitor:
+        enabled: true
+
+      config:
+        customParsers: ''
+
+  blackboxExporter:
+    enabled: true
+    name: prometheus-blackbox-exporter
+    chart: prometheus-community/prometheus-blackbox-exporter
+    repository: https://prometheus-community.github.io/helm-charts
+    version: 11.20.0
+    config:
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+
+      # Required by ICMP probes
+      securityContext:
+        capabilities:
+          add:
+            - NET_RAW
+
+      serviceMonitor:
+        enabled: true
+        labels:
+          release: prometheus
+        defaults:
+          labels:
+            release: prometheus
+          interval: 60s
+
+        targets:
+          - name: example
+            url: http://example.local
+      # Without Alertmanager these notify nobody: alerts are Grafana rules
+      prometheusRule:
+        enabled: false
+        additionalLabels:
+          release: prometheus
+
+  openTelemetry:
+    enabled: false
+    name: opentelemetry-collector
+    chart: open-telemetry/opentelemetry-collector
+    repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+    version: 0.175.1
+    config:
+      mode: deployment
+      image:
+        repository: otel/opentelemetry-collector-k8s

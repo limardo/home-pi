@@ -1,0 +1,77 @@
+---
+namespace: ''
+
+charts:
+  nfs:
+    enabled: true
+    name: csi-driver-nfs
+    chart: csi-driver-nfs/csi-driver-nfs
+    repository: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+    version: 4.13.4
+    config:
+      kubeletDir: /var/lib/k0s/kubelet
+      controller:
+        resources:
+          csiProvisioner:
+            limits:
+              memory: 256Mi
+          csiResizer:
+            limits:
+              memory: 256Mi
+      node:
+        resources:
+          nfs:
+            limits:
+              memory: 256Mi
+      externalSnapshotter:
+        enabled: true
+
+  longhorn:
+    enabled: true
+    name: longhorn
+    chart: longhorn/longhorn
+    repository: https://charts.longhorn.io
+    version: 1.13.0
+    forceUpgrade: false
+    config:
+      csi:
+        kubeletRootDir: /var/lib/k0s/kubelet
+        attacherReplicaCount: 1
+        provisionerReplicaCount: 1
+        resizerReplicaCount: 1
+        snapshotterReplicaCount: 1
+      persistence:
+        defaultClass: true
+        defaultClassReplicaCount: 2
+      defaultSettings:
+        defaultDataPath: /srv/data/longhorn
+        defaultReplicaCount: 2
+        storageMinimalAvailablePercentage: 15
+        storageReservedPercentageForDefaultDisk: 10
+        nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+        taintToleration: ''
+      longhornGlobalManager:
+        replicas: 1
+      longhornUI:
+        replicas: 1
+      metrics:
+        serviceMonitor:
+          enabled: true
+          additionalLabels:
+            release: prometheus
+          interval: 60s
+          # Longhorn's internal k8s client histograms: ~13,700 series, only for debugging Longhorn
+          metricRelabelings:
+            - sourceLabels: [__name__]
+              regex: longhorn_(rest_client|workqueue)_.*
+              action: drop
+      networkPolicies:
+        metricsScrapeSources:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: kube-metrics
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: prometheus
+      global:
+        tolerations: []

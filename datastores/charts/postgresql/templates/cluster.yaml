@@ -1,0 +1,76 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    {{- include "datastores.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.instances }}
+  imageName: {{ .Values.imageName }}
+
+  postgresql:
+    {{- with .Values.parameters }}
+    parameters:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    # A user reaches only databases named after a role it belongs to
+    pg_hba:
+      - host all backup all scram-sha-256
+      - host samerole all all scram-sha-256
+      - host all all all reject
+
+  startDelay: 3600
+  livenessProbeTimeout: 120
+  smartShutdownTimeout: 300
+  stopDelay: 1800
+  switchoverDelay: 3600
+
+  probes:
+    startup:
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 18
+    liveness:
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 12
+      isolationCheck:
+        enabled: true
+        requestTimeout: 5000
+        connectionTimeout: 5000
+    readiness:
+      periodSeconds: 10
+      timeoutSeconds: 10
+      failureThreshold: 6
+
+  managed:
+    roles:
+      - name: backup
+        ensure: present
+        login: true
+        inRoles:
+          - pg_read_all_data
+        passwordSecret:
+          name: {{ .Chart.Name }}-backup
+
+  {{- with .Values.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  storage:
+    size: {{ .Values.storage.size }}
+    storageClass: {{ .Release.Name }}-{{ .Chart.Name }}
+
+  affinity:
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+    # Empty values must be omitted: CNPG sees [] and {} as different from its stored nil and recreates the pods forever.
+    {{- with .Values.nodeSelector }}
+    nodeSelector:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+    tolerations:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}

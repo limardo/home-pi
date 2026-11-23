@@ -1,0 +1,61 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+image:
+  repository: deluan/navidrome
+  pullPolicy: IfNotPresent
+
+service:
+  - name: http
+    port: 4533
+    protocol: TCP
+
+hostnames:
+  - navidrome.example.local
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+
+startupProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+  failureThreshold: 30
+livenessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+readinessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+
+# Not on NFS: SQLite locking breaks there
+storage:
+  storageClass: longhorn
+  size: 1Gi
+
+nfs:
+  musicPath: /path/to/music
+
+# The watcher misses changes other pods make on NFS
+scanSchedule: '@every 1h'
+
+probe:
+  url: http://navidrome.{{ .Release.Namespace }}.svc.cluster.local:4533/ping
+
+metrics:
+  path: /metrics

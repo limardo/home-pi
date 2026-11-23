@@ -1,0 +1,14 @@
+customFormatDefinitions:
+  - trash_id: c3f7b2a91d4e8f5a0b6c9e2d7a1f4b8c
+    trash_scores:
+      default: -10000
+    trash_description: "Language: Italian Only: Because it uses reverse scoring, and if you use the default scores, it will assign all releases without the Italian audio a score of -10000"
+    name: "Language: Not Italian"
+    includeCustomFormatWhenRenaming: false
+    specifications:
+      - name: Not Italian Language
+        implementation: LanguageSpecification
+        negate: true
+        required: false
+        fields:
+          value: {{ .Values.language }}

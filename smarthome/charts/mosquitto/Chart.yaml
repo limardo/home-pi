@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: mosquitto
+description: Mosquitto MQTT broker chart for SmartHome
+type: application
+version: 0.1.0
+appVersion: '2.1.4-alpine'

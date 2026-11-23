@@ -1,0 +1,13 @@
+---
+
+- name: Replace old hostname with new hostname
+  become: true
+  ansible.builtin.replace:
+    path: /etc/hosts
+    regexp: '{{ ansible_facts["hostname"] }}'
+    replace: '{{ hostname_name }}'
+
+- name: Setting hostname
+  become: true
+  ansible.builtin.hostname:
+    name: '{{ hostname_name }}'

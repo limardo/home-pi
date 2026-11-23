@@ -1,0 +1,68 @@
+---
+global:
+  blackbox:
+    prober: prometheus-blackbox-exporter.kube-observability.svc:9115
+  gateway:
+    name: home-gateway
+    namespace: kube-ingress
+  postgresql:
+    host: postgresql-rw.datastores.svc
+    namespace: datastores
+    cluster: postgresql
+
+slskd:
+  enabled: true
+  hostnames:
+    - slskd.apps.local
+
+soulsync:
+  enabled: true
+  hostnames:
+    - soulsync.apps.local
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  tolerations:
+    - key: arch
+      operator: Equal
+      value: amd64
+      effect: NoSchedule
+
+radarr:
+  enabled: true
+  hostnames:
+    - radarr.apps.local
+
+sonarr:
+  enabled: true
+  hostnames:
+    - sonarr.apps.local
+
+lidarr:
+  enabled: false
+  hostnames:
+    - lidarr.apps.local
+
+prowlarr:
+  enabled: true
+  hostnames:
+    - prowlarr.apps.local
+
+configarr:
+  enabled: true
+  instances:
+    radarr: true
+    sonarr: true
+    lidarr: false
+    prowlarr: true
+  jellyfin:
+    host: jellyfin.mediacenter.svc.cluster.local
+
+flaresolverr:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  tolerations:
+    - key: arch
+      operator: Equal
+      value: amd64
+      effect: NoSchedule

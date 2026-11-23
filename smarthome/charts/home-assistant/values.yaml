@@ -1,0 +1,64 @@
+---
+global:
+  blackbox:
+    prober: blackbox.example.local:9115
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+image:
+  repository: ghcr.io/home-assistant/home-assistant
+  pullPolicy: IfNotPresent
+
+service:
+  - name: http
+    port: 8123
+    protocol: TCP
+
+hostnames:
+  - home-assistant.example.local
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 1536Mi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+nodeSelector: {}
+tolerations: []
+
+# First start installs integration requirements: slow on ARM
+startupProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+  failureThreshold: 60
+livenessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+readinessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+
+# Not on NFS: SQLite locking breaks there
+storage:
+  storageClass: longhorn
+  size: 2Gi
+
+probe:
+  url: http://home-assistant.{{ .Release.Namespace }}.svc.cluster.local:8123
+
+# Rendered as /config/secrets.yaml, read by !secret in files/
+secrets:
+  latitude_home: 0.0
+  longitude_home: 0.0
+  latitude_work: 0.0
+  longitude_work: 0.0
+  external_url: https://ha.example.com
+  internal_url: http://ha.example.local:8123
+  trusted_networks:
+    - 192.168.x.0/24

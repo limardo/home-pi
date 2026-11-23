@@ -1,0 +1,8 @@
+---
+
+zone:
+  - name: Ufficio
+    latitude: !secret latitude_work
+    longitude: !secret longitude_work
+    radius: 100
+    icon: mdi:office-building

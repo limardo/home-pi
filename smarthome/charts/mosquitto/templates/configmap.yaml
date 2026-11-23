@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smarthome.labels" . | nindent 4 }}
+data:
+  mosquitto.conf: |
+    listener {{ (first .Values.service).port }}
+    allow_anonymous false
+    password_file /mosquitto/auth/passwd
+    # zigbee2mqtt republishes its discovery when HA comes online
+    persistence false
+    log_dest stdout
+    log_type error
+    log_type warning
+    log_type notice

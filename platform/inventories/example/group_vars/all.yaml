@@ -1,0 +1,9 @@
+---
+
+ansible_user: <user>
+ansible_python_interpreter: /usr/bin/python3
+
+os_release_upgrade: false
+os_timezone: Etc/UTC
+
+k0s_version: v1.37.2+k0s.1

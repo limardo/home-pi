@@ -1,0 +1,49 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+  postgresql:
+    host: postgresql.example.svc
+    namespace: postgresql-namespace
+    cluster: postgresql
+
+image:
+  repository: lscr.io/linuxserver/lidarr
+  pullPolicy: IfNotPresent
+
+http:
+  port: 8686
+hostnames:
+  - lidarr.example.local
+
+databases:
+  - main
+  - log
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 768Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+
+nfs:
+  config:
+    path: /path/to/config
+    mountPath: /config
+  music:
+    path: /path/to/music
+    mountPath: /music
+  downloads:
+    path: /path/to/downloads
+    mountPath: /downloads
+
+probe:
+  url: http://lidarr.{{ .Release.Namespace }}.svc.cluster.local:8686/ping

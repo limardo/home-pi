@@ -1,0 +1,141 @@
+---
+
+- name: Configure pending dpkg packages
+  become: true
+  ansible.builtin.command:
+    cmd: dpkg --configure -a
+  register: os_dpkg_configure
+  changed_when: os_dpkg_configure.stdout != ""
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Update and upgrade apt packages
+  become: true
+  ansible.builtin.apt:
+    upgrade: 'dist'
+    update_cache: true
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Check if reboot required
+  become: true
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: os_reboot_required
+
+- name: Reboot the machine
+  become: true
+  ansible.builtin.reboot:
+  throttle: 1
+  when: os_reboot_required.stat.exists
+
+- name: Install latest os release
+  ansible.builtin.include_tasks: release-upgrade.yaml
+  when: os_release_upgrade
+
+- name: Install NFS Common
+  become: true
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Install iSCSI
+  become: true
+  ansible.builtin.apt:
+    name: open-iscsi
+    state: present
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Remove unused dependency packages
+  become: true
+  ansible.builtin.apt:
+    autoremove: true
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Cleans the local repository of retrieved package
+  become: true
+  ansible.builtin.apt:
+    autoclean: true
+  when: ansible_facts['distribution'] == 'Debian' or ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Set timezone
+  become: true
+  community.general.timezone:
+    name: '{{ os_timezone }}'
+
+- name: Enable network services
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ service }}.service'
+    enabled: true
+    masked: false
+  loop: '{{ os_network_services }}'
+  loop_control:
+    loop_var: service
+
+- name: Enable iscsid service
+  become: true
+  ansible.builtin.systemd:
+    name: iscsid
+    state: started
+    enabled: true
+
+- name: Limit CPU max frequency
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/default/cpufrequtils
+    regexp: '^MAX_SPEED='
+    line: 'MAX_SPEED={{ os_cpu_max_freq }}'
+  register: os_cpufreq_line
+  when: os_cpu_max_freq | int > 0
+
+- name: Reboot to apply CPU max frequency
+  become: true
+  ansible.builtin.reboot:
+  throttle: 1
+  when: os_cpufreq_line is changed
+
+- name: Disable magic SysRq
+  become: true
+  ansible.posix.sysctl:
+    name: kernel.sysrq
+    value: '0'
+    sysctl_file: /etc/sysctl.d/99-sysrq.conf
+  tags: sysrq
+
+- name: Prepare the eMMC data disk
+  when: os_data_disk | length > 0
+  tags: data-disk
+  become: true
+  block:
+    - name: Partition and format the data disk
+      when: >-
+        (ansible_facts['devices'][os_data_disk | basename]['partitions']
+          [(os_data_disk | basename) ~ 'p1']['start'] | default(0) | int) != 32768
+      block:
+        - name: Drop the old partition table
+          ansible.builtin.command:
+            cmd: '/usr/sbin/wipefs -a {{ os_data_disk }}'
+          changed_when: true
+
+        - name: Create the data partition
+          community.general.parted:
+            device: '{{ os_data_disk }}'
+            label: msdos
+            number: 1
+            part_start: 16MiB
+            part_end: '100%'
+            state: present
+
+        - name: Create the filesystem
+          community.general.filesystem:
+            dev: '{{ os_data_disk }}p1'
+            fstype: ext4
+            opts: '-m 0 -L data'
+
+    - name: Mount the data disk
+      ansible.posix.mount:
+        path: '{{ os_data_disk_mount }}'
+        src: LABEL=data
+        fstype: ext4
+        opts: defaults,noatime
+        state: mounted

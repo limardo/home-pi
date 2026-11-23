@@ -1,0 +1,6 @@
+---
+
+- name: Install k0s worker
+  hosts: k0s_worker
+  roles:
+    - worker

@@ -1,0 +1,49 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+
+instances: 3
+
+imageName: ghcr.io/cloudnative-pg/postgresql:18.6-minimal-trixie
+
+storage:
+  size: 3Gi
+
+parameters:
+  max_connections: '100'
+  shared_buffers: '128MB'
+  effective_cache_size: '256MB'
+  maintenance_work_mem: '32MB'
+  work_mem: '4MB'
+  checkpoint_completion_target: '0.9'
+  wal_buffers: '8MB'
+  min_wal_size: '80MB'
+  max_wal_size: '256MB'
+  # eMMC: low random_page_cost as for SSD
+  random_page_cost: '1.1'
+  effective_io_concurrency: '100'
+  log_min_duration_statement: '2000'
+  log_checkpoints: 'on'
+  autovacuum_vacuum_scale_factor: '0.05'
+  autovacuum_analyze_scale_factor: '0.02'
+
+nodeSelector: {}
+tolerations: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+backup:
+  schedule: '0 3 * * *'
+  retentionDays: 7
+  nfsPath: /path/to/postgresql
+
+probe:
+  url: postgresql-rw.{{ .Release.Namespace }}.svc.cluster.local:5432
+  module: tcp_connect

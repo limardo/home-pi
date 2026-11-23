@@ -1,0 +1,21 @@
+---
+
+- name: Disable preserve hostname
+  become: true
+  ansible.builtin.replace:
+    path: /etc/cloud/cloud.cfg
+    regexp: '^(preserve_hostname:).*$'
+    replace: '\1 false'
+
+- name: Setting hostname
+  become: true
+  ansible.builtin.replace:
+    path: /boot/firmware/user-data
+    regexp: '^(hostname:).*$'
+    replace: '\1 {{ hostname_name }}'
+  register: hostname_set
+
+- name: Reboot machine
+  become: true
+  ansible.builtin.reboot:
+  when: hostname_set.changed

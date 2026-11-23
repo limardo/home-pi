@@ -1,0 +1,9 @@
+---
+
+argument_specs:
+  main:
+    short_description: Passwordless sudo for the deploy user
+    options:
+      sudo_user:
+        type: str
+        default: '{{ ansible_user }}'

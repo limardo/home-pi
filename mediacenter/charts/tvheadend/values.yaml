@@ -1,0 +1,70 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+image:
+  repository: lscr.io/linuxserver/tvheadend
+  pullPolicy: IfNotPresent
+
+# The first port is the web UI, used by the HTTPRoute
+service:
+  - name: http
+    port: 9981
+    protocol: TCP
+  - name: htsp
+    port: 9982
+    protocol: TCP
+
+hostnames:
+  - tvheadend.example.local
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+
+startupProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+  failureThreshold: 30
+livenessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+readinessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+
+# path holds the config and recordings folders
+nfs:
+  path: /path/to/tvheadend
+  piconsPath: /path/to/picon
+
+# Read by tvheadend's "XMLTV: tv_grab_file" grabber
+epg:
+  urls:
+    - https://epgshare01.online/epgshare01/epg_ripper_IT1.xml.gz
+  schedule: '0 */12 * * *'
+  image: curlimages/curl:8.11.1
+  resources:
+    limits:
+      cpu: 200m
+      memory: 64Mi
+    requests:
+      cpu: 10m
+      memory: 16Mi
+
+probe:
+  url: http://tvheadend.{{ .Release.Namespace }}.svc.cluster.local:9981/ping

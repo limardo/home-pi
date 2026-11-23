@@ -1,0 +1,89 @@
+---
+$schema: https://moonrepo.dev/schemas/project.json
+language: bash
+project:
+  description: Provisioning for my SBCs
+  title: platform
+tasks:
+  build:
+    command: ansible-galaxy install --force --role-file requirements.yaml
+    inputs:
+      - requirements.yaml
+      - luclim/**/*
+    outputs:
+      - collections
+    toolchains: unstable_uv
+
+  check:
+    options:
+      cache: false
+    command: ansible-playbook --check --diff -i inventories/home @in(0)
+    inputs:
+      - site.yaml
+    deps:
+      - ~:build
+    toolchains: unstable_uv
+
+  deploy:
+    options:
+      cache: false
+    command: ansible-playbook -i inventories/home @in(0)
+    inputs:
+      - site.yaml
+    deps:
+      - ~:build
+    toolchains: unstable_uv
+
+  fix:
+    options:
+      cache: false
+      affectedFiles:
+        pass: env
+        passInputsWhenNoMatch: true
+    # exit code 8 means "violations fixed", not a failure
+    script: ansible-lint --fix -c ./.ansible-lint.yaml ${MOON_AFFECTED_FILES//:/ } || [ $? -eq 8 ]
+    inputs:
+      - '**/*.{yaml,yml}'
+      - '!collections/**'
+    deps:
+      - ~:build
+    toolchains: unstable_uv
+
+  format:
+    options:
+      cache: false
+      affectedFiles:
+        pass: args
+        passInputsWhenNoMatch: true
+    command: yamlfmt
+    inputs:
+      - '**/*.{yaml,yml}'
+      - '!collections/**'
+    toolchains: unstable_uv
+
+  lint:
+    options:
+      cache: false
+    command: ansible-lint -c ./.ansible-lint.yaml
+    inputs:
+      - '**/*'
+      - '!collections/**'
+    deps:
+      - ~:build
+    toolchains: unstable_uv
+
+  test:
+    options:
+      cache: false
+    command: ansible-playbook -i inventories/example @in(0) --syntax-check
+    inputs:
+      - site.yaml
+    deps:
+      - ~:build
+    toolchains: unstable_uv
+
+  clean:
+    options:
+      cache: false
+    command: rm -rf collections
+    toolchains: system

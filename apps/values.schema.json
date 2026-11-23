@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "apps",
+  "description": "Umbrella chart values: each subchart has its own values.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nfs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "server"
+          ]
+        },
+        "blackbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "prober": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "prober"
+          ]
+        },
+        "gateway": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name",
+            "namespace"
+          ]
+        },
+        "postgresql": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "cluster": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "host",
+            "namespace",
+            "cluster"
+          ]
+        }
+      }
+    },
+    "slskd": {
+      "$ref": "#/definitions/subchart"
+    },
+    "soulsync": {
+      "$ref": "#/definitions/subchart"
+    },
+    "radarr": {
+      "$ref": "#/definitions/subchart"
+    },
+    "sonarr": {
+      "$ref": "#/definitions/subchart"
+    },
+    "lidarr": {
+      "$ref": "#/definitions/subchart"
+    },
+    "prowlarr": {
+      "$ref": "#/definitions/subchart"
+    },
+    "configarr": {
+      "$ref": "#/definitions/subchart"
+    },
+    "flaresolverr": {
+      "$ref": "#/definitions/subchart"
+    }
+  },
+  "definitions": {
+    "subchart": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+---
+
+lovelace:
+  resource_mode: yaml
+  resources: !include ../lovelace/resources.yaml
+  dashboards:
+    lovelace:
+      mode: yaml
+      filename: ui-lovelace.yaml
+      title: Home
+      icon: mdi:view-dashboard
+      show_in_sidebar: true
+    lovelace-admin:
+      mode: yaml
+      filename: lovelace/dashboards/admin.yaml
+      title: Amministratore
+      icon: mdi:view-carousel
+      show_in_sidebar: true
+      require_admin: true

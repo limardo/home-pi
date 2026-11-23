@@ -1,0 +1,93 @@
+---
+$schema: https://moonrepo.dev/schemas/project.json
+language: bash
+project:
+  description: MediaCenter apps for my K8s (Live TV, movies and TV series)
+  title: mediacenter
+dependsOn:
+  - addons
+tasks:
+  template:
+    inputs:
+      - '**/*.{yaml,yml,tpl}'
+    command: helm
+    args:
+      - template
+      - --namespace=mediacenter
+      - --debug
+      - --values=values.yaml
+      - --values=values.local.yaml
+      - mediacenter
+      - .
+    toolchains: system
+
+  build:
+    outputs:
+      - mediacenter-*.tgz
+    command: helm
+    args:
+      - package
+      - --namespace=mediacenter
+      - --debug
+      - .
+    inputs:
+      - '**/*.{yaml,yml,tpl}'
+    toolchains: system
+
+  deploy:
+    options:
+      cache: false
+    script: helm install --namespace=mediacenter --create-namespace --values=values.yaml --values=values.local.yaml mediacenter ./mediacenter-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  update:
+    options:
+      cache: false
+    script: helm upgrade --namespace=mediacenter --reset-then-reuse-values --values=values.yaml --values=values.local.yaml mediacenter ./mediacenter-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  format:
+    options:
+      cache: false
+      affectedFiles:
+        pass: args
+        passInputsWhenNoMatch: true
+    command: yamlfmt
+    inputs:
+      - '**/*.{yaml,yml}'
+      - '!**/templates/**'
+    toolchains: unstable_uv
+
+  lint:
+    options:
+      cache: false
+    command: helm
+    args:
+      - lint
+      - .
+    toolchains: system
+
+  test:
+    options:
+      cache: false
+    command: helm
+    args:
+      - test
+      - mediacenter
+    toolchains: system
+
+  destroy:
+    options:
+      cache: false
+    command: helm
+    args:
+      - uninstall
+      - --namespace=mediacenter
+      - mediacenter
+    toolchains: system
+
+  clean:
+    options:
+      cache: false
+    script: rm -rf ./mediacenter-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system

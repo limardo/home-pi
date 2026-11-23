@@ -1,0 +1,75 @@
+radarr:
+  movies:
+    base_url: http://radarr.{{ .Release.Namespace }}.svc.cluster.local:7878
+    api_key: !env RADARR_API_KEY
+
+    delete_unmanaged_custom_formats:
+      enabled: true
+
+    delete_unmanaged_quality_profiles:
+      enabled: true
+
+    quality_definition:
+      type: movie
+
+    include:
+      - template: radarr-quality-definition-movie
+      - template: radarr-quality-profile-hd-bluray-web
+      - template: radarr-custom-formats-hd-bluray-web
+
+    custom_formats:
+      - trash_ids:
+          - c3f7b2a91d4e8f5a0b6c9e2d7a1f4b8c
+        assign_scores_to:
+          - name: HD Bluray + WEB
+
+    download_clients:
+      data:
+        - <<: *transmission
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            <<: *transmission_fields
+            movie_category: radarr
+      remote_paths: *remote_paths
+
+    root_folders:
+      - /movies
+
+    media_management:
+      <<: *media_management
+      recycleBin: /movies/.recycle
+
+    media_naming_api:
+      renameMovies: true
+
+    ui_config:
+      <<: *ui_config
+      movieInfoLanguage: {{ .Values.language }}
+
+    indexer_config: *indexer_config
+
+    delay_profiles: *delay_profiles
+
+    host_config:
+      authenticationMethod: forms
+      authenticationRequired: disabledForLocalAddresses
+      allowedHosts: "*.{{ .Release.Namespace }}.local,*.{{ .Release.Namespace }}.svc.cluster.local"
+
+    notifications:
+      data:
+        - name: Jellyfin
+          type: MediaBrowser
+          events:
+            on_grab: true
+            on_download: true
+            on_upgrade: true
+            on_rename: true
+            on_movie_delete: true
+            on_movie_file_delete: true
+            on_movie_file_delete_for_upgrade: true
+            on_health_issue: false
+            on_health_restored: false
+            on_application_update: true
+          include_health_warnings: false
+          fields: *jellyfin_fields

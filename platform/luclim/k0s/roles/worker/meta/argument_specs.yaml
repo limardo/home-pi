@@ -1,0 +1,10 @@
+---
+
+argument_specs:
+  main:
+    short_description: Join the board to the cluster as a k0s worker
+    options:
+      worker_profile:
+        type: str
+        required: true
+        description: Name of a workerProfiles entry in the controller k0s.yaml.

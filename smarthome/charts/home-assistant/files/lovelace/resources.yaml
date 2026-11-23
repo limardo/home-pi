@@ -1,0 +1,8 @@
+---
+
+- url: https://cdn.jsdelivr.net/gh/bramkragten/weather-card/dist/weather-card.min.js
+  type: module
+- url: /local/community/battery-state-card/battery-state-card.js
+  type: module
+- url: /local/community/lovelace-auto-entities/auto-entities.js
+  type: module

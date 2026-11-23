@@ -1,0 +1,83 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "apps.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            {{- include "apps.selectorLabels" . | nindent 12 }}
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: {{ .Chart.Name }}
+              image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                - name: TZ
+                  value: Europe/Rome
+                - name: CONFIGARR_ENABLE_MERGE
+                  value: "true"
+                # Without it a failed instance is only logged and the pod ends Completed
+                - name: STOP_ON_ERROR
+                  value: "true"
+                - name: SECRETS_LOCATION
+                  value: /app/secrets/secrets.yml
+                {{- range list "radarr" "sonarr" "lidarr" "prowlarr" "jellyfin" }}
+                {{- if dig . true $.Values.instances }}
+                - name: {{ . | upper }}_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ . }}-apikey
+                      key: token
+                {{- end }}
+                {{- end }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              volumeMounts:
+                - name: config
+                  mountPath: /app/config/config.yml
+                  subPath: config.yml
+                - name: secrets
+                  mountPath: /app/secrets
+                  readOnly: true
+                - name: repos
+                  mountPath: /app/repos
+          volumes:
+            - name: config
+              configMap:
+                name: {{ .Chart.Name }}
+            # Applied by hand from secrets/configarr-secrets.yaml; without it prowlarr indexers are left untouched
+            - name: secrets
+              secret:
+                secretName: {{ .Chart.Name }}-secrets
+                optional: true
+            - name: repos
+              nfs:
+                server: {{ .Values.global.nfs.server }}
+                path: {{ .Values.repos.path }}

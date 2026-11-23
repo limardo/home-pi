@@ -1,0 +1,43 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+  postgresql:
+    host: postgresql.example.svc
+    namespace: postgresql-namespace
+    cluster: postgresql
+
+image:
+  repository: lscr.io/linuxserver/prowlarr
+  pullPolicy: IfNotPresent
+
+http:
+  port: 9696
+hostnames:
+  - prowlarr.example.local
+
+databases:
+  - main
+  - log
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 768Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+
+nfs:
+  config:
+    path: /path/to/config
+    mountPath: /config
+
+probe:
+  url: http://prowlarr.{{ .Release.Namespace }}.svc.cluster.local:9696/ping

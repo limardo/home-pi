@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "security",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "charts": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/chart"
+      }
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clusterIssuer": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "spec": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "enabled",
+            "name",
+            "spec"
+          ]
+        }
+      }
+    }
+  },
+  "definitions": {
+    "chart": {
+      "description": "Entry of .Values.charts: becomes a k0s Chart CR (addons.k0sChart)",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "name",
+        "chart",
+        "version"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chart": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "type": "object"
+        },
+        "policies": {
+          "$ref": "#/definitions/policiesChart"
+        }
+      },
+      "if": {
+        "properties": {
+          "chart": {
+            "pattern": "^oci://"
+          }
+        }
+      },
+      "else": {
+        "required": [
+          "repository"
+        ]
+      }
+    },
+    "policiesChart": {
+      "description": "kyverno-policies chart: becomes a Chart CR with the policies in files/policies",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "name",
+        "chart",
+        "version",
+        "excludedNamespaces",
+        "defaultResources"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chart": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "type": "object"
+        },
+        "excludedNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "defaultResources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "requests": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "memory": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "cpu",
+                "memory"
+              ]
+            },
+            "limits": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "memory": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "cpu",
+                "memory"
+              ]
+            }
+          },
+          "required": [
+            "requests",
+            "limits"
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "chart": {
+            "pattern": "^oci://"
+          }
+        }
+      },
+      "else": {
+        "required": [
+          "repository"
+        ]
+      }
+    }
+  },
+  "required": [
+    "charts",
+    "services"
+  ]
+}

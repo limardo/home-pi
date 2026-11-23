@@ -1,0 +1,7 @@
+---
+
+title: Amministratore
+views:
+  - !include ../views/devices.yaml
+  - !include ../views/weather.yaml
+  - !include ../views/zigbee.yaml

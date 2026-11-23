@@ -1,0 +1,2 @@
+{{- $gateway := merge (deepCopy .Values.global.gateway) .Values.charts.nginx.gateway }}
+{{ include "addons.k0sCharts" (dict "ctx" . "overrides" (dict "nginx" (dict "gateways" (list $gateway)))) }}

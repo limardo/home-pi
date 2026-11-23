@@ -1,0 +1,50 @@
+{{- $res := .Values.charts.kyverno.policies.defaultResources -}}
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
+metadata:
+  name: add-default-resources
+  labels:
+    {{- include "addons.labels" (dict "ctx" . "name" "kyverno-policies") | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: Aggiungi resources di default
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: >-
+      Applica requests/limits di default ai container che non li dichiarano.
+      Default: cpu={{ $res.requests.cpu }}/{{ $res.limits.cpu }}, memory={{ $res.requests.memory }}/{{ $res.limits.memory }}
+spec:
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+        operations: ["CREATE"]
+  matchConditions:
+    - name: exclude-system-namespaces
+      expression: {{ include "security.kyverno-policies.excludeNamespaces" . | quote }}
+  mutations:
+    - patchType: ApplyConfiguration
+      applyConfiguration:
+        expression: |
+          Object{
+            spec: Object.spec{
+              containers: Object.spec.containers.map(c,
+                Object.spec.containers{
+                  name: c.name,
+                  resources: Object.spec.containers.resources{
+                    requests: Object.spec.containers.resources.requests{
+                      cpu: has(c.resources) && has(c.resources.requests) && has(c.resources.requests.cpu) ?
+                        c.resources.requests.cpu : "{{ $res.requests.cpu }}",
+                      memory: has(c.resources) && has(c.resources.requests) && has(c.resources.requests.memory) ?
+                        c.resources.requests.memory : "{{ $res.requests.memory }}"
+                    },
+                    limits: Object.spec.containers.resources.limits{
+                      cpu: has(c.resources) && has(c.resources.limits) && has(c.resources.limits.cpu) ?
+                        c.resources.limits.cpu : "{{ $res.limits.cpu }}",
+                      memory: has(c.resources) && has(c.resources.limits) && has(c.resources.limits.memory) ?
+                        c.resources.limits.memory : "{{ $res.limits.memory }}"
+                    }
+                  }
+                }
+              )
+            }
+          }

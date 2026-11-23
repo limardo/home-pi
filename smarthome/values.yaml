@@ -1,0 +1,27 @@
+---
+global:
+  blackbox:
+    prober: prometheus-blackbox-exporter.kube-observability.svc:9115
+  gateway:
+    name: home-gateway
+    namespace: kube-ingress
+
+home-assistant:
+  enabled: true
+  hostnames:
+    - home-assistant.smarthome.local
+
+mosquitto:
+  enabled: true
+
+zigbee2mqtt:
+  enabled: true
+  hostnames:
+    - zigbee2mqtt.smarthome.local
+
+matterbridge:
+  enabled: true
+  # Interface name on the BPI-M5 workers
+  mdnsInterface: end0
+  hostnames:
+    - matterbridge.smarthome.local

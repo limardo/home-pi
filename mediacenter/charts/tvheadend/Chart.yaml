@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: tvheadend
+description: Tvheadend chart for MediaCenter
+type: application
+version: 0.1.0
+appVersion: '8837853a-ls288'

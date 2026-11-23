@@ -1,0 +1,8 @@
+**/templates/
+platform/
+addons/charts/ingress/files/gateway-api/
+addons/charts/security/files/policies/
+addons/charts/observability/files/grafana/alerting/contactpoints.yaml
+apps/charts/configarr/files/
+smarthome/charts/home-assistant/files/
+samples/

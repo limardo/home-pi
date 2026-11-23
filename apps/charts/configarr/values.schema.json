@@ -1,0 +1,164 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "configarr",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": [
+        "nfs"
+      ]
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        }
+      },
+      "required": [
+        "repository",
+        "pullPolicy"
+      ]
+    },
+    "schedule": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resources": {
+      "type": "object"
+    },
+    "repos": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "downloadClient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "urlBase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "remotePath": {
+          "type": "string",
+          "pattern": "^/"
+        }
+      },
+      "required": [
+        "host",
+        "port",
+        "urlBase",
+        "remotePath"
+      ]
+    },
+    "jellyfin": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      },
+      "required": [
+        "host",
+        "port"
+      ]
+    },
+    "language": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "trashRevision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "instances": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radarr": {
+          "type": "boolean"
+        },
+        "sonarr": {
+          "type": "boolean"
+        },
+        "lidarr": {
+          "type": "boolean"
+        },
+        "prowlarr": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "radarr",
+        "sonarr",
+        "lidarr",
+        "prowlarr"
+      ]
+    },
+    "nodeSelector": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "tolerations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "required": [
+    "image",
+    "schedule",
+    "resources",
+    "repos",
+    "downloadClient",
+    "jellyfin",
+    "language",
+    "trashRevision",
+    "instances",
+    "nodeSelector",
+    "tolerations"
+  ]
+}

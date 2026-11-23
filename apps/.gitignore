@@ -1,0 +1,3 @@
+apps-*.tgz
+**/charts/*.tgz
+values.local.yaml

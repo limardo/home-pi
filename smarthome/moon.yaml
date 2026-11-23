@@ -1,0 +1,95 @@
+---
+$schema: https://moonrepo.dev/schemas/project.json
+language: bash
+project:
+  description: Home automation for my K8s
+  title: smarthome
+dependsOn:
+  - addons
+
+tasks:
+  template:
+    inputs:
+      - '**/*.{yaml,yml,tpl,json}'
+    command: helm
+    args:
+      - template
+      - --namespace=smarthome
+      - --debug
+      - --values=values.yaml
+      - --values=values.local.yaml
+      - smarthome
+      - .
+    toolchains: system
+
+  build:
+    outputs:
+      - smarthome-*.tgz
+    command: helm
+    args:
+      - package
+      - --namespace=smarthome
+      - --debug
+      - .
+    inputs:
+      - '**/*.{yaml,yml,tpl,json}'
+    toolchains: system
+
+  deploy:
+    options:
+      cache: false
+    script: helm install --namespace=smarthome --create-namespace --values=values.yaml --values=values.local.yaml smarthome ./smarthome-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  update:
+    options:
+      cache: false
+    script: helm upgrade --namespace=smarthome --reset-then-reuse-values --values=values.yaml --values=values.local.yaml smarthome ./smarthome-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  format:
+    options:
+      cache: false
+      affectedFiles:
+        pass: args
+        passInputsWhenNoMatch: true
+    command: yamlfmt
+    inputs:
+      - '**/*.{yaml,yml}'
+      - '!**/templates/**'
+      - '!charts/home-assistant/files/**'
+    toolchains: unstable_uv
+
+  lint:
+    options:
+      cache: false
+    command: helm
+    args:
+      - lint
+      - .
+    toolchains: system
+
+  test:
+    options:
+      cache: false
+    command: helm
+    args:
+      - test
+      - smarthome
+    toolchains: system
+
+  destroy:
+    options:
+      cache: false
+    command: helm
+    args:
+      - uninstall
+      - --namespace=smarthome
+      - smarthome
+    toolchains: system
+
+  clean:
+    options:
+      cache: false
+    script: rm -rf ./smarthome-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system

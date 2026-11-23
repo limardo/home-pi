@@ -1,0 +1,13 @@
+{{- if .Values.charts.certManager.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cert-manager-alert-rules
+  namespace: {{ include "addons.namespace" . }}
+  labels:
+    {{- include "addons.labels" (dict "ctx" . "name" "cert-manager") | nindent 4 }}
+    grafana_alert: "1"
+data:
+  cert-manager.yaml: |-
+    {{- .Files.Get "files/alert-rules.yaml" | nindent 4 }}
+{{- end }}

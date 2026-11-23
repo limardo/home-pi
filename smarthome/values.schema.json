@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "smarthome",
+  "description": "Umbrella chart values: each subchart has its own values.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "blackbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "prober": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "prober"
+          ]
+        },
+        "gateway": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name",
+            "namespace"
+          ]
+        }
+      },
+      "required": [
+        "blackbox",
+        "gateway"
+      ]
+    },
+    "home-assistant": {
+      "$ref": "#/definitions/subchart"
+    },
+    "mosquitto": {
+      "$ref": "#/definitions/subchart"
+    },
+    "zigbee2mqtt": {
+      "$ref": "#/definitions/subchart"
+    },
+    "matterbridge": {
+      "$ref": "#/definitions/subchart"
+    }
+  },
+  "definitions": {
+    "subchart": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

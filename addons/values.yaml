@@ -1,0 +1,97 @@
+---
+global:
+  blackbox:
+    prober: prometheus-blackbox-exporter.kube-observability.svc:9115
+  gateway:
+    name: home-gateway
+    namespace: kube-ingress
+
+storage:
+  enabled: true
+  namespace: kube-storage
+  charts:
+    nfs:
+      enabled: true
+    longhorn:
+      enabled: true
+      config:
+        defaultSettings:
+          taintToleration: arch=amd64:NoSchedule
+        global:
+          tolerations:
+            - key: arch
+              operator: Equal
+              value: amd64
+              effect: NoSchedule
+
+security:
+  enabled: true
+  namespace: kube-security
+  services:
+    clusterIssuer:
+      enabled: true
+  charts:
+    certManager:
+      enabled: true
+    kyverno:
+      enabled: false
+      policies:
+        enabled: true
+
+observability:
+  enabled: true
+  namespace: kube-observability
+  charts:
+    fluentBit:
+      enabled: true
+      config:
+        tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
+          - key: node-role.kubernetes.io/master
+            operator: Exists
+            effect: NoSchedule
+          - key: arch
+            operator: Equal
+            value: amd64
+            effect: NoSchedule
+    loki:
+      enabled: true
+    grafana:
+      enabled: true
+      config:
+        route:
+          main:
+            hostnames:
+              - grafana.k8s.local
+        grafana.ini:
+          smtp:
+            host: smtp.gmail.com:587
+            from_address: grafana@k8s.local
+    blackboxExporter:
+      enabled: true
+    openTelemetry:
+      enabled: false
+
+ingress:
+  enabled: true
+  namespace: kube-ingress
+  services:
+    gatewayApi:
+      enabled: true
+    metallb:
+      enabled: true
+  charts:
+    nginx:
+      enabled: true
+      version: 2.7.2
+
+databases:
+  enabled: true
+  namespace: kube-database
+  charts:
+    postgresql:
+      enabled: true
+    mariadb:
+      enabled: false

@@ -1,0 +1,18 @@
+---
+
+- name: Check if the sudoers.d directory exists
+  become: true
+  ansible.builtin.stat:
+    path: /etc/sudoers.d/
+  register: sudo_sudoers_d
+
+- name: Disable password when using sudo command
+  become: true
+  ansible.builtin.template:
+    src: sudoers.j2
+    dest: /etc/sudoers.d/050-{{ sudo_user }}
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/visudo -cf %s
+  when: sudo_sudoers_d.stat.isdir is defined and sudo_sudoers_d.stat.isdir

@@ -1,0 +1,7 @@
+---
+
+- name: Install k0s controller
+  import_playbook: luclim.k0s.controller
+
+- name: Install k0s worker
+  import_playbook: luclim.k0s.worker

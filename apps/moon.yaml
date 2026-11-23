@@ -1,0 +1,95 @@
+---
+$schema: https://moonrepo.dev/schemas/project.json
+language: bash
+project:
+  description: Self-hosted apps for my K8s
+  title: apps
+dependsOn:
+  - addons
+  - datastores
+tasks:
+  template:
+    inputs:
+      - '**/*.{yaml,yml,tpl,json}'
+    command: helm
+    args:
+      - template
+      - --namespace=apps
+      - --debug
+      - --values=values.yaml
+      - --values=values.local.yaml
+      - apps
+      - .
+    toolchains: system
+
+  build:
+    outputs:
+      - apps-*.tgz
+    command: helm
+    args:
+      - package
+      - --namespace=apps
+      - --debug
+      - .
+    inputs:
+      - '**/*.{yaml,yml,tpl,json}'
+    toolchains: system
+
+  deploy:
+    options:
+      cache: false
+    script: helm install --namespace=apps --create-namespace --values=values.yaml --values=values.local.yaml apps ./apps-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  update:
+    options:
+      cache: false
+    script: helm upgrade --namespace=apps --reset-then-reuse-values --values=values.yaml --values=values.local.yaml apps ./apps-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  format:
+    options:
+      cache: false
+      affectedFiles:
+        pass: args
+        passInputsWhenNoMatch: true
+    command: yamlfmt
+    inputs:
+      - '**/*.{yaml,yml}'
+      - '!**/templates/**'
+      - '!charts/configarr/files/**'
+    toolchains: unstable_uv
+
+  lint:
+    options:
+      cache: false
+    command: helm
+    args:
+      - lint
+      - .
+    toolchains: system
+
+  test:
+    options:
+      cache: false
+    command: helm
+    args:
+      - test
+      - apps
+    toolchains: system
+
+  destroy:
+    options:
+      cache: false
+    command: helm
+    args:
+      - uninstall
+      - --namespace=apps
+      - apps
+    toolchains: system
+
+  clean:
+    options:
+      cache: false
+    script: rm -rf ./apps-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system

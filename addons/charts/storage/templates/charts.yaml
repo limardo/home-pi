@@ -1,0 +1,1 @@
+{{ include "addons.k0sCharts" (dict "ctx" .) }}

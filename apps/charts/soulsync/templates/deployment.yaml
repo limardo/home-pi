@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "apps.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "apps.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "apps.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Rome"
+            # As in the docker-compose: without it the app looks for /config/config.json and uses defaults
+            - name: SOULSYNC_CONFIG_PATH
+              value: /app/config/config.json
+          ports:
+            - name: http
+              containerPort: {{ .Values.http.port }}
+              protocol: TCP
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/config
+              subPath: config
+            - name: data
+              mountPath: /app/data
+              subPath: data
+            - name: data
+              mountPath: /app/logs
+              subPath: logs
+            - name: downloads
+              mountPath: /app/downloads
+            - name: music
+              mountPath: /app/Transfer
+            - name: audiobooks
+              mountPath: /app/audiobooks
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: audiobooks
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Chart.Name }}
+        - name: downloads
+          nfs:
+            server: {{ .Values.global.nfs.server }}
+            path: {{ .Values.nfs.downloadsPath }}
+        - name: music
+          nfs:
+            server: {{ .Values.global.nfs.server }}
+            path: {{ .Values.nfs.musicPath }}

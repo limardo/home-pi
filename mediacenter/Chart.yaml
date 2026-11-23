@@ -1,0 +1,17 @@
+---
+apiVersion: v2
+name: mediacenter
+description: A Helm chart for MediaCenter (Live TV, movies and TV series)
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: tvheadend
+    version: 0.1.0
+    condition: tvheadend.enabled
+  - name: jellyfin
+    version: 0.1.0
+    condition: jellyfin.enabled
+  - name: navidrome
+    version: 0.1.0
+    condition: navidrome.enabled

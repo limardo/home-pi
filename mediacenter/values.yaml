@@ -1,0 +1,36 @@
+---
+global:
+  blackbox:
+    prober: prometheus-blackbox-exporter.kube-observability.svc:9115
+  gateway:
+    name: home-gateway
+    namespace: kube-ingress
+
+tvheadend:
+  enabled: true
+  hostnames:
+    - tvheadend.mediacenter.local
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  tolerations:
+    - key: arch
+      operator: Equal
+      value: amd64
+      effect: NoSchedule
+
+jellyfin:
+  enabled: true
+  hostnames:
+    - jellyfin.mediacenter.local
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  tolerations:
+    - key: arch
+      operator: Equal
+      value: amd64
+      effect: NoSchedule
+
+navidrome:
+  enabled: true
+  hostnames:
+    - navidrome.mediacenter.local

@@ -1,0 +1,68 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+image:
+  repository: slskd/slskd
+  pullPolicy: IfNotPresent
+
+http:
+  port: 5030
+hostnames:
+  - slskd.example.local
+
+# slskd settings, passed as env vars: don't repeat them in slskd.yml, the YAML wins
+settings:
+  description: Sharing from home-pi
+  shareFilters:
+    - \.ini$
+    - Thumbs.db$
+    - \.DS_Store$
+  upload:
+    slots: 20
+    # KiB/s
+    speedLimit: 1000
+  metrics: true
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 384Mi
+
+nodeSelector: {}
+tolerations: []
+
+startupProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+  failureThreshold: 60
+livenessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+readinessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+
+storage:
+  storageClass: longhorn
+  size: 2Gi
+
+nfs:
+  downloadsPath: /path/to/downloads
+  sharedPath: /path/to/music
+
+probe:
+  url: http://slskd.{{ .Release.Namespace }}.svc.cluster.local:5030/health
+
+metrics:
+  path: /metrics

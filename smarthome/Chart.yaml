@@ -1,0 +1,20 @@
+---
+apiVersion: v2
+name: smarthome
+description: Umbrella chart for home automation
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: home-assistant
+    version: 0.1.0
+    condition: home-assistant.enabled
+  - name: mosquitto
+    version: 0.1.0
+    condition: mosquitto.enabled
+  - name: zigbee2mqtt
+    version: 0.1.0
+    condition: zigbee2mqtt.enabled
+  - name: matterbridge
+    version: 0.1.0
+    condition: matterbridge.enabled

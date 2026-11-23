@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: prowlarr
+description: Prowlarr (indexer manager)
+type: application
+version: 0.1.0
+appVersion: '3.0.2.5780-ls169'

@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "observability",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": [
+        "nfs",
+        "gateway"
+      ],
+      "properties": {
+        "nfs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "server": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "server"
+          ]
+        },
+        "gateway": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name",
+            "namespace"
+          ]
+        }
+      }
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "charts": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/chart"
+      }
+    }
+  },
+  "definitions": {
+    "chart": {
+      "description": "Entry of .Values.charts: becomes a k0s Chart CR (addons.k0sChart)",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "name",
+        "chart",
+        "version"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chart": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "forceUpgrade": {
+          "description": "k0s defaults to true: false avoids helm upgrade --force on charts that own volumes",
+          "type": "boolean"
+        },
+        "config": {
+          "type": "object"
+        },
+        "storageClass": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "share": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reclaimPolicy": {
+              "type": "string",
+              "enum": [
+                "Delete",
+                "Retain"
+              ]
+            },
+            "mountOptions": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "name",
+            "share",
+            "reclaimPolicy",
+            "mountOptions"
+          ],
+          "description": "NFS StorageClass created by the subchart (addons.nfsStorageClasses)"
+        },
+        "admin": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "description": "Grafana admin Secret, applied by hand (keys user and password)",
+          "required": [
+            "secretName"
+          ]
+        },
+        "alertEmail": {
+          "description": "Grafana alert recipient (files/grafana/alerting/contactpoints.yaml)",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "if": {
+        "properties": {
+          "chart": {
+            "pattern": "^oci://"
+          }
+        }
+      },
+      "else": {
+        "required": [
+          "repository"
+        ]
+      }
+    }
+  },
+  "required": [
+    "charts"
+  ]
+}

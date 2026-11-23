@@ -1,0 +1,34 @@
+---
+namespace: ''
+
+charts:
+  postgresql:
+    enabled: true
+    name: postgresql-operator
+    chart: cloudnative-pg/cloudnative-pg
+    repository: https://cloudnative-pg.github.io/charts
+    version: 0.29.1
+    config:
+      monitoring:
+        podMonitorEnabled: true
+        podMonitorAdditionalLabels:
+          release: prometheus
+      additionalArgs:
+        - --leader-lease-duration=60
+        - --leader-renew-deadline=40
+
+  mariadb:
+    enabled: false
+    name: mariadb-operator
+    chart: mariadb-operator/mariadb-operator
+    repository: https://helm.mariadb.com/mariadb-operator
+    version: 26.10.1
+    config:
+      crds:
+        enabled: true
+      metrics:
+        enabled: true
+      webhook:
+        cert:
+          certManager:
+            enabled: true

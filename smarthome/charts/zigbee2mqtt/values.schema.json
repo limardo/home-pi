@@ -1,0 +1,232 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "zigbee2mqtt",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": [
+        "blackbox",
+        "gateway"
+      ],
+      "properties": {
+        "blackbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "prober": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "prober"
+          ]
+        },
+        "gateway": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name",
+            "namespace"
+          ]
+        }
+      }
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        }
+      },
+      "required": [
+        "repository",
+        "pullPolicy"
+      ]
+    },
+    "service": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+            "maxLength": 15
+          },
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "protocol": {
+            "type": "string",
+            "enum": [
+              "TCP",
+              "UDP"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "port",
+          "protocol"
+        ]
+      }
+    },
+    "hostnames": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "type": "string",
+          "pattern": "^tcp://"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "ember",
+            "zstack",
+            "deconz",
+            "zigate",
+            "zboss"
+          ]
+        }
+      },
+      "required": [
+        "port",
+        "type"
+      ]
+    },
+    "mqtt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "server": {
+          "type": "string",
+          "pattern": "^mqtts?://"
+        },
+        "user": {
+          "type": "string",
+          "minLength": 1
+        },
+        "passwordSecret": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "server",
+        "user",
+        "passwordSecret"
+      ]
+    },
+    "resources": {
+      "type": "object"
+    },
+    "nodeSelector": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "tolerations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "startupProbe": {
+      "type": "object"
+    },
+    "livenessProbe": {
+      "type": "object"
+    },
+    "readinessProbe": {
+      "type": "object"
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "storageClass": {
+          "type": "string",
+          "minLength": 1
+        },
+        "size": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "storageClass",
+        "size"
+      ]
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "image",
+    "service",
+    "hostnames",
+    "adapter",
+    "mqtt",
+    "resources",
+    "nodeSelector",
+    "tolerations",
+    "startupProbe",
+    "livenessProbe",
+    "readinessProbe",
+    "storage",
+    "probe"
+  ]
+}

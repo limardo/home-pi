@@ -1,0 +1,71 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+name: jellyfin
+chart: jellyfin/jellyfin
+repository: https://jellyfin.github.io/jellyfin-helm
+version: 3.7.0
+
+hostnames:
+  - jellyfin.example.local
+
+nodeSelector: {}
+tolerations: []
+
+config:
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+  # Hardware transcoding with the node GPU
+  securityContext:
+    privileged: true
+  volumes:
+    - name: dri
+      hostPath:
+        path: /dev/dri
+  volumeMounts:
+    - name: dri
+      mountPath: /dev/dri
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 60s
+      labels:
+        release: prometheus
+
+  httpRoute:
+    enabled: true
+
+  persistence:
+    config:
+      # jellyfin refuses to start with less than 2 GiB free in /config/data
+      storageClass: longhorn
+      size: 6Gi
+      annotations:
+        helm.sh/resource-policy: keep
+    cache:
+      enabled: true
+      storageClass: longhorn
+      size: 4Gi
+      annotations:
+        helm.sh/resource-policy: keep
+    media:
+      type: nfs
+      nfsPath: /path/to/video
+      # Writable for Live TV recordings
+      readOnly: false
+
+probe:
+  url: http://jellyfin.{{ .Release.Namespace }}.svc.cluster.local:8096/health

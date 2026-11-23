@@ -1,0 +1,68 @@
+---
+global:
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+namespace: ''
+
+services:
+  # Update with: moon run addons:upgrade-gateway-api
+  gatewayApi:
+    enabled: true
+
+  # metallb itself is installed by k0s: only the pool and L2 advertisement here
+  metallb:
+    enabled: true
+    addressPool:
+      name: default-pool
+      addresses:
+        - 192.168.x.x-192.168.x.y
+      autoAssign: true
+    l2Advertisement:
+      name: metallb
+
+charts:
+  nginx:
+    enabled: true
+    name: nginx
+    chart: oci://ghcr.io/nginx/charts/nginx-gateway-fabric
+    # Pinned: k0s panics resolving "latest" from OCI. Apply the new CRDs with --server-side before changing it
+    version: 2.7.2
+    metrics:
+      enabled: true
+    gateway:
+      annotations:
+        cert-manager.io/cluster-issuer: home-issuer
+        metallb.universe.tf/loadBalancerIPs: 192.168.x.x
+      spec:
+        gatewayClassName: nginx
+        listeners:
+          - name: http
+            port: 80
+            protocol: HTTP
+            allowedRoutes:
+              namespaces:
+                from: All
+          - name: https
+            hostname: '*.example.com'
+            port: 443
+            protocol: HTTPS
+            allowedRoutes:
+              namespaces:
+                from: All
+            tls:
+              mode: Terminate
+              certificateRefs:
+                - kind: Secret
+                  name: home-tls
+    config:
+      nginx:
+        config:
+          ipFamily: ipv4
+      nginxGateway:
+        snippets:
+          enable: true
+        config:
+          logging:
+            level: debug

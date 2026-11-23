@@ -1,0 +1,6 @@
+---
+
+- name: Install k0s controller
+  hosts: k0s_controller
+  roles:
+    - controller

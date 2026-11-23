@@ -1,0 +1,13 @@
+---
+
+homekit:
+  - name: Home Assistant Bridge
+    port: 21064
+    entity_config: { }
+    filter:
+      include_domains:
+        - binary_sensor
+        - cover
+        - person
+        - switch
+        - sensor

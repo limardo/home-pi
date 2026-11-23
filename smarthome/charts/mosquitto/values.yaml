@@ -1,0 +1,47 @@
+---
+global:
+  blackbox:
+    prober: blackbox.example.local:9115
+
+image:
+  repository: eclipse-mosquitto
+  pullPolicy: IfNotPresent
+
+service:
+  - name: mqtt
+    port: 1883
+    protocol: TCP
+
+# One generated password each, in the Secret mosquitto-users
+users:
+  - homeassistant
+  - zigbee2mqtt
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 16Mi
+
+nodeSelector: {}
+tolerations: []
+
+startupProbe:
+  tcpSocket:
+    port: mqtt
+  periodSeconds: 5
+  failureThreshold: 12
+livenessProbe:
+  tcpSocket:
+    port: mqtt
+  periodSeconds: 10
+readinessProbe:
+  tcpSocket:
+    port: mqtt
+  periodSeconds: 10
+
+probe:
+  url: mosquitto.{{ .Release.Namespace }}.svc.cluster.local:1883
+  module: tcp_connect

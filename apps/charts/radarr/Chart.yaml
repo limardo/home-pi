@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: radarr
+description: Radarr (movies)
+type: application
+version: 0.1.0
+appVersion: '7.0.3.10918-ls328'

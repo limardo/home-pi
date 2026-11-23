@@ -1,0 +1,43 @@
+{{- $nginx := .Values.charts.nginx }}
+{{- if and $nginx.enabled $nginx.metrics.enabled }}
+{{- $targets := list (dict "name" "nginx-gateway-fabric" "monitor" "nginx-gateway-fabric" "selector" (dict "app.kubernetes.io/instance" $nginx.name "app.kubernetes.io/name" "nginx-gateway-fabric")) }}
+{{- $gateway := .Values.global.gateway.name }}
+{{- $app := printf "%s-nginx" $gateway }}
+{{- $targets = append $targets (dict "name" $app "monitor" $gateway "selector" (dict "app.kubernetes.io/name" $app)) }}
+{{- range $targets }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}-metrics
+  namespace: {{ include "addons.namespace" $ }}
+  labels:
+    {{- include "addons.labels" (dict "ctx" $ "name" .name) | nindent 4 }}
+spec:
+  selector:
+    {{- toYaml .selector | nindent 4 }}
+  ports:
+    - name: metrics
+      port: 9113
+      targetPort: metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .monitor }}
+  namespace: {{ include "addons.namespace" $ }}
+  labels:
+    release: prometheus
+    {{- include "addons.labels" (dict "ctx" $ "name" .name) | nindent 4 }}
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "addons.namespace" $ }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .name }}
+  endpoints:
+    - port: metrics
+      path: /metrics
+{{- end }}
+{{- end }}

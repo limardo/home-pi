@@ -1,0 +1,14 @@
+---
+
+- name: Pi boards
+  hosts:
+    - minipc
+    - raspberry
+    - banana
+  roles:
+    - sudo
+    - os
+    - hostname
+
+- name: Playbook k0s
+  import_playbook: site-k0s.yaml

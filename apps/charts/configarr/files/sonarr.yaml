@@ -1,0 +1,86 @@
+sonarr:
+  series:
+    base_url: http://sonarr.{{ .Release.Namespace }}.svc.cluster.local:8989
+    api_key: !env SONARR_API_KEY
+
+    delete_unmanaged_custom_formats:
+      enabled: true
+
+    delete_unmanaged_quality_profiles:
+      enabled: true
+
+    quality_definition:
+      type: series
+
+    include:
+      - template: sonarr-quality-definition-series
+      - template: sonarr-v4-quality-profile-web-1080p
+      - template: sonarr-v4-custom-formats-web-1080p
+
+    custom_formats:
+      - trash_ids:
+          - c3f7b2a91d4e8f5a0b6c9e2d7a1f4b8c
+        assign_scores_to:
+          - name: WEB-1080p
+
+    download_clients:
+      data:
+        - <<: *transmission
+          remove_completed_downloads: true
+          remove_failed_downloads: true
+          fields:
+            <<: *transmission_fields
+            tv_category: sonarr
+      remote_paths: *remote_paths
+
+    root_folders:
+      - /tv
+
+    media_management:
+      <<: *media_management
+      recycleBin: /tv/.recycle
+
+    media_naming_api:
+      renameEpisodes: true
+      standardEpisodeFormat: "{Series TitleYear} - S{season:00}E{episode:00} - {Episode CleanTitle:90} {[Custom Formats]}{[Quality Full]}{[Mediainfo AudioCodec}{ Mediainfo AudioChannels]}{[MediaInfo VideoDynamicRangeType]}{[Mediainfo VideoCodec]}{-Release Group}"
+      dailyEpisodeFormat: "{Series TitleYear} - {Air-Date} - {Episode CleanTitle:90} {[Custom Formats]}{[Quality Full]}{[Mediainfo AudioCodec}{ Mediainfo AudioChannels]}{[MediaInfo VideoDynamicRangeType]}{[Mediainfo VideoCodec]}{-Release Group}"
+      animeEpisodeFormat: "{Series TitleYear} - S{season:00}E{episode:00} - {absolute:000} - {Episode CleanTitle:90} {[Custom Formats]}{[Quality Full]}{[Mediainfo AudioCodec}{ Mediainfo AudioChannels]}{MediaInfo AudioLanguages}{[MediaInfo VideoDynamicRangeType]}[{Mediainfo VideoCodec }{MediaInfo VideoBitDepth}bit]{-Release Group}"
+      seriesFolderFormat: "{Series TitleYear}"
+      seasonFolderFormat: "Season {season:00}"
+
+    ui_config: *ui_config
+
+    indexer_config: *indexer_config
+
+    delay_profiles: *delay_profiles
+
+    # configarr accepts it only from Sonarr v5: with v4 the instance fails
+    # host_config:
+    #   authenticationMethod: forms
+    #   authenticationRequired: disabledForLocalAddresses
+    #   allowedHosts: "*.{{ .Release.Namespace }}.local,*.{{ .Release.Namespace }}.svc.cluster.local"
+
+    notifications:
+      data:
+        - name: Jellyfin
+          type: MediaBrowser
+          events:
+            on_grab: true
+            on_download: true
+            on_upgrade: true
+            on_import_complete: false
+            on_rename: true
+            on_series_add: false
+            on_series_delete: true
+            on_episode_file_delete: true
+            on_episode_file_delete_for_upgrade: true
+            on_health_issue: false
+            on_health_restored: false
+            on_application_update: true
+          include_health_warnings: false
+          fields: *jellyfin_fields
+
+    # Used by the "Main Tv" auto tagging, which configarr does not manage
+    tags:
+      - lingua
+      - tv

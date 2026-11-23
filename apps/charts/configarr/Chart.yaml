@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: configarr
+description: Configarr (TRaSH quality profiles and custom formats for radarr, sonarr, prowlarr)
+type: application
+version: 0.1.0
+appVersion: '1.39.2'

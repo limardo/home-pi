@@ -1,0 +1,105 @@
+---
+$schema: https://moonrepo.dev/schemas/project.json
+language: bash
+project:
+  description: Addons for my K8s
+  title: addons
+dependsOn:
+  - platform
+tasks:
+  template:
+    inputs:
+      - '**/*.{yaml,yml,tpl,json,conf}'
+    command: helm
+    args:
+      - template
+      - --namespace=kube-addons
+      - --debug
+      - --values=values.yaml
+      - --values=values.local.yaml
+      - addons
+      - .
+    toolchains: system
+
+  build:
+    outputs:
+      - addons-*.tgz
+    command: helm
+    args:
+      - package
+      - --namespace=kube-addons
+      - --debug
+      - .
+    inputs:
+      - '**/*.{yaml,yml,tpl,json,conf}'
+    toolchains: system
+
+  deploy:
+    options:
+      cache: false
+    script: helm install --namespace=kube-addons --create-namespace --values=values.yaml --values=values.local.yaml addons ./addons-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  update:
+    options:
+      cache: false
+    script: helm upgrade --namespace=kube-addons --values=values.yaml --values=values.local.yaml addons ./addons-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  upgrade-gateway-api:
+    options:
+      cache: false
+    script: >-
+      curl -fsSL -o charts/ingress/files/gateway-api/standard-install.yaml
+      https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/standard-install.yaml
+      && grep -m1 'bundle-version' charts/ingress/files/gateway-api/standard-install.yaml
+    toolchains: system
+
+  format:
+    options:
+      cache: false
+      affectedFiles:
+        pass: args
+        passInputsWhenNoMatch: true
+    command: yamlfmt
+    inputs:
+      - '**/*.{yaml,yml}'
+      - '!**/templates/**'
+      - '!charts/ingress/files/gateway-api/**'
+      - '!charts/security/files/policies/**'
+      - '!charts/observability/files/grafana/alerting/contactpoints.yaml'
+    toolchains: unstable_uv
+
+  lint:
+    options:
+      cache: false
+    command: helm
+    args:
+      - lint
+      - .
+    toolchains: system
+
+  test:
+    options:
+      cache: false
+    command: helm
+    args:
+      - test
+      - addons
+    toolchains: system
+
+  destroy:
+    options:
+      cache: false
+    command: helm
+    args:
+      - uninstall
+      - --namespace=kube-addons
+      - addons
+    toolchains: system
+
+  clean:
+    options:
+      cache: false
+    script: rm -rf ./addons-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system

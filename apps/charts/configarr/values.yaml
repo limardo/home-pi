@@ -1,0 +1,44 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+
+image:
+  repository: ghcr.io/raydak-labs/configarr
+  pullPolicy: IfNotPresent
+
+schedule: '0 4 * * *'
+
+instances:
+  radarr: true
+  sonarr: true
+  lidarr: false
+  prowlarr: true
+
+trashRevision: 0ecc2efc9f2434e2390c30aa75805cf233e785dc
+
+resources:
+  limits:
+    cpu: 400m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+
+downloadClient:
+  host: 192.168.x.x
+  port: 9091
+  urlBase: /transmission/
+  remotePath: /path/to/downloads/
+
+jellyfin:
+  host: jellyfin.example.svc.cluster.local
+  port: 8096
+
+language: 5
+
+repos:
+  path: /path/to/configarr

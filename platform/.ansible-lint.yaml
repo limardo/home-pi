@@ -1,0 +1,12 @@
+---
+profile: production
+offline: true
+skip_list:
+  # The reboot tasks run on "changed" on purpose, with throttle: 1
+  - no-handler
+  # luclim.k0s is installed from the local folder, never published
+  - galaxy[no-changelog]
+enable_list:
+  - empty-string-compare
+  - no-log-password
+  - no-same-owner

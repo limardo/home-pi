@@ -1,0 +1,49 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+  postgresql:
+    host: postgresql.example.svc
+    namespace: postgresql-namespace
+    cluster: postgresql
+
+image:
+  repository: lscr.io/linuxserver/radarr
+  pullPolicy: IfNotPresent
+
+http:
+  port: 7878
+hostnames:
+  - radarr.example.local
+
+databases:
+  - main
+  - log
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 768Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+
+nfs:
+  config:
+    path: /path/to/config
+    mountPath: /config
+  movies:
+    path: /path/to/movies
+    mountPath: /movies
+  downloads:
+    path: /path/to/downloads
+    mountPath: /downloads
+
+probe:
+  url: http://radarr.{{ .Release.Namespace }}.svc.cluster.local:7878/ping

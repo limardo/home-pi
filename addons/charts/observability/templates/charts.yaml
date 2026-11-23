@@ -1,0 +1,22 @@
+{{- $charts := .Values.charts }}
+{{- $gateway := .Values.global.gateway }}
+{{- $overrides := dict
+  "loki" (dict "singleBinary" (dict "persistence" (dict "storageClass" $charts.loki.storageClass.name)))
+  "grafana" (dict
+    "persistence" (dict "storageClassName" $charts.grafana.storageClass.name)
+    "admin" (dict "existingSecret" $charts.grafana.admin.secretName "userKey" "user" "passwordKey" "password")
+    "route" (dict "main" (dict "parentRefs" (list (dict "name" $gateway.name "namespace" $gateway.namespace "sectionName" "http"))))
+    "datasources" (dict "datasources.yaml" (include "observability.yamlFile" (dict "ctx" . "path" "files/grafana/datasources/datasources.yaml") | fromYaml))
+    "alerting" (dict
+      "rules.yaml" (include "observability.yamlFile" (dict "ctx" . "path" "files/grafana/alerting/rules.yaml") | fromYaml)
+      "contactpoints.yaml" (tpl (required "files/grafana/alerting/contactpoints.yaml not found" (.Files.Get "files/grafana/alerting/contactpoints.yaml")) . | fromYaml)))
+  "fluentBit" (dict "config" (dict
+    "service" (required "files/fluent-bit/service.conf not found" (.Files.Get "files/fluent-bit/service.conf"))
+    "inputs" (required "files/fluent-bit/inputs.conf not found" (.Files.Get "files/fluent-bit/inputs.conf"))
+    "filters" (required "files/fluent-bit/filters.conf not found" (.Files.Get "files/fluent-bit/filters.conf"))
+    "outputs" (required "files/fluent-bit/outputs.conf not found" (.Files.Get "files/fluent-bit/outputs.conf"))))
+  "blackboxExporter" (dict
+    "config" (dict "modules" (include "observability.yamlFile" (dict "ctx" . "path" "files/blackbox/modules.yaml") | fromYaml))
+    "prometheusRule" (dict "rules" (required "files/blackbox/alert-rules.yaml not found" (.Files.Get "files/blackbox/alert-rules.yaml") | fromYamlArray)))
+}}
+{{ include "addons.k0sCharts" (dict "ctx" . "overrides" $overrides) }}

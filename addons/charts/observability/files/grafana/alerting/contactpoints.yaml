@@ -1,0 +1,15 @@
+apiVersion: 1
+deleteContactPoints:
+  - orgId: 1
+    uid: ""
+contactPoints:
+  - orgId: 1
+    name: grafana-default-email
+    receivers:
+      - uid: "email-receiver"
+        name: "Email Receiver"
+        type: email
+        settings:
+          addresses: {{ .Values.charts.grafana.alertEmail | quote }}
+          singleEmail: true
+        disableResolveMessage: false

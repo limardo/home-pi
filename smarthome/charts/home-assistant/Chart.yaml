@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: home-assistant
+description: Home Assistant chart for SmartHome
+type: application
+version: 0.1.0
+appVersion: '2026.11.2'

@@ -1,0 +1,58 @@
+---
+global:
+  blackbox:
+    prober: blackbox.example.local:9115
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+image:
+  repository: luligu/matterbridge
+  pullPolicy: IfNotPresent
+
+service:
+  - name: http
+    port: 8283
+    protocol: TCP
+
+hostnames:
+  - matterbridge.example.local
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+# hostNetwork shows every veth too: Matter must announce on the LAN one
+mdnsInterface: eth0
+
+nodeSelector: {}
+tolerations: []
+
+# Plugins are reinstalled with npm at every start
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  periodSeconds: 10
+  failureThreshold: 60
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  periodSeconds: 30
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  periodSeconds: 10
+
+storage:
+  storageClass: longhorn
+  size: 512Mi
+
+probe:
+  url: http://matterbridge.{{ .Release.Namespace }}.svc.cluster.local:8283

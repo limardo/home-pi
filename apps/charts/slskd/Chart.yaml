@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: slskd
+description: slskd (Soulseek client)
+type: application
+version: 0.1.0
+appVersion: '0.26.2'

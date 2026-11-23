@@ -1,0 +1,13 @@
+---
+$schema: https://moonrepo.dev/schemas/workspace.json
+projects:
+  platform: platform
+  addons: addons
+  smarthome: smarthome
+  datastores: datastores
+  apps: apps
+  mediacenter: mediacenter
+vcs:
+  defaultBranch: main
+  client: git
+telemetry: false

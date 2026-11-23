@@ -1,0 +1,10 @@
+{{- $kyverno := .Values.charts.kyverno }}
+{{- if and $kyverno.enabled $kyverno.policies.enabled }}
+{{- $policies := list }}
+{{- range $path, $_ := .Files.Glob "files/policies/*.yaml" }}
+{{- $policies = append $policies (tpl ($.Files.Get $path) $ | fromYaml) }}
+{{- end }}
+{{- $chart := deepCopy $kyverno.policies }}
+{{- $_ := set $chart "config" (merge (dict "customPolicies" $policies) ($chart.config | default dict)) }}
+{{ include "addons.k0sChart" (dict "ctx" $ "key" "kyverno.policies" "chart" $chart) }}
+{{- end }}

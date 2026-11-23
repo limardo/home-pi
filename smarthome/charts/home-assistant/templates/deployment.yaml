@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "smarthome.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "smarthome.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "smarthome.labels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secrets: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      # mDNS (HomeKit, discovery) and SSDP need the node network
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # No runAsUser: the official image's s6-overlay init needs root
+      initContainers:
+        # HA writes these only when configuration.yaml is missing, never here
+        - name: ui-files
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -ec
+            - |
+              [ -e /config/automations.yaml ] || echo '[]' > /config/automations.yaml
+              [ -e /config/scripts.yaml ] || echo '{}' > /config/scripts.yaml
+              [ -e /config/scenes.yaml ] || echo '[]' > /config/scenes.yaml
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: TZ
+              value: "Europe/Rome"
+          ports:
+            {{- range .Values.service }}
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol }}
+            {{- end }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: files
+              mountPath: /config/configuration.yaml
+              subPath: configuration.yaml
+              readOnly: true
+            - name: files
+              mountPath: /config/ui-lovelace.yaml
+              subPath: ui-lovelace.yaml
+              readOnly: true
+            {{- range include "home-assistant.configDirs" . | fromYamlArray }}
+            - name: {{ . }}
+              mountPath: /config/{{ . }}
+              readOnly: true
+            {{- end }}
+            - name: secrets
+              mountPath: /config/secrets.yaml
+              subPath: secrets.yaml
+              readOnly: true
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: {{ .Chart.Name }}
+        - name: files
+          configMap:
+            name: {{ .Chart.Name }}-config
+        {{- range include "home-assistant.configDirs" . | fromYamlArray }}
+        - name: {{ . }}
+          configMap:
+            name: {{ $.Chart.Name }}-config
+            items:
+              {{- include "home-assistant.configItems" (dict "ctx" $ "dir" .) | trim | nindent 14 }}
+        {{- end }}
+        - name: secrets
+          secret:
+            secretName: {{ .Chart.Name }}-secrets

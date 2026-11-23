@@ -1,0 +1,29 @@
+---
+
+argument_specs:
+  main:
+    short_description: Base setup of a Debian or Ubuntu board
+    options:
+      os_release_upgrade:
+        type: bool
+        default: false
+      os_timezone:
+        type: str
+        default: Etc/UTC
+      os_network_services:
+        type: list
+        elements: str
+        default:
+          - systemd-networkd
+          - systemd-networkd-wait-online
+      os_cpu_max_freq:
+        type: int
+        default: 0
+        description: Maximum CPU frequency in kHz; 0 leaves it unchanged.
+      os_data_disk:
+        type: str
+        default: ''
+        description: Block device to partition and mount as data disk; empty skips it.
+      os_data_disk_mount:
+        type: str
+        default: /srv/data

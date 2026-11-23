@@ -1,0 +1,21 @@
+type: grid
+cards:
+  - type: heading
+    heading: Media Player
+    heading_style: title
+    icon: mdi:television-play
+  - type: media-control
+    entity: media_player.tv
+    grid_options:
+      columns: 12
+      rows: auto
+  - type: media-control
+    entity: media_player.fire_stick_tv_di_luca
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: media-control
+    entity: media_player.decoder
+    grid_options:
+      columns: 6
+      rows: auto

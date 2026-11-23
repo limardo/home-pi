@@ -1,0 +1,23 @@
+---
+apiVersion: v2
+name: addons
+description: Umbrella chart for K0s cluster addons
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: storage
+    version: 0.1.0
+    condition: storage.enabled
+  - name: security
+    version: 0.1.0
+    condition: security.enabled
+  - name: observability
+    version: 0.1.0
+    condition: observability.enabled
+  - name: ingress
+    version: 0.1.0
+    condition: ingress.enabled
+  - name: databases
+    version: 0.1.0
+    condition: databases.enabled

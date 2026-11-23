@@ -1,0 +1,11 @@
+---
+apiVersion: v2
+name: datastores
+description: Shared datastores for the apps (PostgreSQL, ...)
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: postgresql
+    version: 0.1.0
+    condition: postgresql.enabled

@@ -1,0 +1,12 @@
+{{- with .Values.services.clusterIssuer }}
+{{- if .enabled }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "addons.labels" (dict "ctx" $ "name" "cert-manager") | nindent 4 }}
+spec:
+  {{- toYaml .spec | nindent 2 }}
+{{- end }}
+{{- end }}

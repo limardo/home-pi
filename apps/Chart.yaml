@@ -1,0 +1,32 @@
+---
+apiVersion: v2
+name: apps
+description: Umbrella chart for self-hosted apps
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: slskd
+    version: 0.1.0
+    condition: slskd.enabled
+  - name: soulsync
+    version: 0.1.0
+    condition: soulsync.enabled
+  - name: radarr
+    version: 0.1.0
+    condition: radarr.enabled
+  - name: sonarr
+    version: 0.1.0
+    condition: sonarr.enabled
+  - name: lidarr
+    version: 0.1.0
+    condition: lidarr.enabled
+  - name: prowlarr
+    version: 0.1.0
+    condition: prowlarr.enabled
+  - name: configarr
+    version: 0.1.0
+    condition: configarr.enabled
+  - name: flaresolverr
+    version: 0.1.0
+    condition: flaresolverr.enabled

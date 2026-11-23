@@ -1,0 +1,17 @@
+{{- /* keep: deleting the CRDs would delete every Gateway and HTTPRoute in the cluster */ -}}
+{{- if .Values.services.gatewayApi.enabled }}
+{{- $labels := include "addons.labels" (dict "ctx" . "name" "gateway-api") | fromYaml }}
+{{- range $doc := splitList "\n---\n" (.Files.Get "files/gateway-api/standard-install.yaml") }}
+{{- $obj := fromYaml $doc }}
+{{- if hasKey $obj "Error" }}
+{{- fail (printf "files/gateway-api/standard-install.yaml is not valid YAML: %s" $obj.Error) }}
+{{- end }}
+{{- if $obj.kind }}
+{{- $meta := $obj.metadata }}
+{{- $_ := set $meta "annotations" (merge (dict "helm.sh/resource-policy" "keep") ($meta.annotations | default dict)) }}
+{{- $_ := set $meta "labels" (merge (deepCopy $labels) ($meta.labels | default dict)) }}
+---
+{{ toYaml $obj }}
+{{- end }}
+{{- end }}
+{{- end }}

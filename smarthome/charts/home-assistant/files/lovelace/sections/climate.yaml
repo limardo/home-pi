@@ -1,0 +1,48 @@
+type: grid
+cards:
+  - type: heading
+    heading: Clima
+    heading_style: title
+    icon: mdi:weather-cloudy
+  - type: weather-forecast
+    entity: weather.forecast_casa
+    show_current: true
+    show_forecast: true
+    forecast_type: daily
+    secondary_info_attribute: humidity
+    forecast_slots: 6
+    grid_options:
+      columns: 12
+      rows: auto
+  - type: thermostat
+    entity: climate.termostato
+    show_current_as_primary: false
+  - type: entities
+    title: Ambiente
+    entities:
+      - entity: sensor.stagione
+        icon: mdi:leaf
+      - entity: sensor.sun_next_rising
+        name: Alba
+        icon: mdi:weather-sunset-up
+      - entity: sensor.sun_next_setting
+        name: Tramonto
+        icon: mdi:weather-sunset-down
+      - entity: sensor.sun_next_noon
+        name: Mezzogiorno solare
+        icon: mdi:weather-sunny
+  - type: tile
+    entity: switch.termostato_blocco_bambini
+    icon: mdi:lock-outline
+    vertical: false
+    features:
+      - type: toggle
+    features_position: inline
+  - type: tile
+    entity: number.termostato_temperature_correction
+    icon: mdi:thermometer-plus
+    vertical: false
+    features:
+      - type: numeric-input
+        style: slider
+    features_position: bottom

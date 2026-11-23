@@ -1,0 +1,64 @@
+---
+
+- name: Ensure k0s is installed
+  ansible.builtin.shell:
+    cmd: command -v k0s >/dev/null 2>&1
+  register: k0s_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Ensure ZSH is installed
+  ansible.builtin.shell:
+    cmd: command -v zsh >/dev/null 2>&1
+  register: k0s_zsh_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Download k0s installer
+  become: true
+  ansible.builtin.get_url:
+    url: https://get.k0s.sh
+    dest: /tmp/k0s.sh
+    mode: '0775'
+  when: k0s_installed.rc > 0
+
+- name: Install k0s
+  become: true
+  ansible.builtin.command:
+    cmd: /tmp/k0s.sh
+    creates: /usr/local/bin/k0s
+  environment:
+    K0S_VERSION: '{{ k0s_version }}'
+  when: k0s_installed.rc > 0
+
+- name: Enabling Bash Completion
+  become: true
+  ansible.builtin.shell:
+    cmd: k0s completion bash > /usr/share/bash-completion/completions/k0s
+    creates: /usr/share/bash-completion/completions/k0s
+
+- name: Enabling Zsh Completion
+  ansible.builtin.lineinfile:
+    path: ~/.zshrc
+    line: autoload -U compinit; compinit
+    state: present
+    create: true
+    mode: '0644'
+  when: k0s_zsh_installed.rc == 0
+
+- name: Create Zsh site-functions folder
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/share/zsh/site-functions
+    state: directory
+    mode: '0755'
+  when: k0s_zsh_installed.rc == 0
+
+- name: Enabling Zsh Completion
+  become: true
+  ansible.builtin.shell:
+    cmd: k0s completion zsh > /usr/local/share/zsh/site-functions/_k0s
+    creates: /usr/local/share/zsh/site-functions/_k0s
+  when: k0s_zsh_installed.rc == 0

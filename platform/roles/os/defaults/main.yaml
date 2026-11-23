@@ -1,0 +1,10 @@
+---
+
+os_release_upgrade: false
+os_timezone: Etc/UTC
+os_network_services:
+  - systemd-networkd
+  - systemd-networkd-wait-online
+os_cpu_max_freq: 0
+os_data_disk: ''
+os_data_disk_mount: /srv/data

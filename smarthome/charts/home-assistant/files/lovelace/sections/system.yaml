@@ -1,0 +1,100 @@
+type: grid
+cards:
+  - type: heading
+    heading: Sistema
+    heading_style: title
+    icon: mdi:cog
+  - type: todo-list
+    entity: todo.casa
+    display_order: alpha_asc
+
+  - type: heading
+    heading: Pi-hole
+    heading_style: subtitle
+    icon: mdi:shield-check
+  - type: tile
+    entity: switch.pi_hole
+    vertical: false
+    features:
+      - type: toggle
+    features_position: inline
+  - type: gauge
+    entity: sensor.pi_hole_ads_percentage_blocked
+    name: Annunci bloccati
+    min: 0
+    max: 100
+    unit: "%"
+    needle: false
+    severity:
+      green: 20
+      yellow: 10
+      red: 0
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: binary_sensor.pi_hole_stato
+        name: Stato
+        icon: mdi:circle
+      - entity: sensor.pi_hole_ads_blocked
+        name: Annunci bloccati (oggi)
+        icon: mdi:block-helper
+      - entity: sensor.pi_hole_dns_queries
+        name: Query DNS
+        icon: mdi:dns
+      - entity: sensor.pi_hole_clienti_visti
+        name: Client visti
+        icon: mdi:devices
+
+  - type: heading
+    heading: Zigbee
+    heading_style: subtitle
+    icon: mdi:zigbee
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: binary_sensor.zigbee2mqtt_bridge_connection_state
+        name: Bridge connesso
+        icon: mdi:connection
+      - entity: sensor.zigbee2mqtt_bridge_version
+        name: Versione
+        icon: mdi:tag
+      - entity: switch.zigbee2mqtt_bridge_permit_join
+        name: Permetti pairing
+        icon: mdi:link-plus
+      - entity: button.zigbee2mqtt_bridge_restart
+        name: Riavvia bridge
+        icon: mdi:restart
+
+  - type: heading
+    heading: Backup
+    heading_style: subtitle
+    icon: mdi:cloud-upload
+  - type: entities
+    show_header_toggle: false
+    entities:
+      - entity: sensor.backup_backup_manager_state
+        name: Stato
+        icon: mdi:check-circle
+      - entity: sensor.backup_last_successful_automatic_backup
+        name: Ultimo backup riuscito
+        icon: mdi:clock-check
+      - entity: sensor.backup_next_scheduled_automatic_backup
+        name: Prossimo backup
+        icon: mdi:clock-outline
+  - type: heading
+    heading: Dispositivi
+    heading_style: subtitle
+    icon: mdi:devices
+  - type: entities
+    title: Storage
+    show_header_toggle: false
+    entities:
+      - entity: sensor.iphone_di_luca_storage
+        name: iPhone Luca
+        icon: mdi:cellphone
+      - entity: sensor.iphone_di_luisa_storage
+        name: iPhone Luisa
+        icon: mdi:cellphone
+      - entity: sensor.lexmark_mb2236adw_black
+        name: Toner nero stampante
+        icon: mdi:printer

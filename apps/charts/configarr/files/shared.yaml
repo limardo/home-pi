@@ -1,0 +1,42 @@
+x-servarr:
+  transmission: &transmission
+    name: Transmission
+    type: transmission
+    enable: true
+    priority: 1
+  transmission_fields: &transmission_fields
+    host: {{ .Values.downloadClient.host }}
+    port: {{ .Values.downloadClient.port }}
+    url_base: {{ .Values.downloadClient.urlBase }}
+
+  remote_paths: &remote_paths
+    - host: {{ .Values.downloadClient.host }}
+      remote_path: {{ .Values.downloadClient.remotePath }}
+      local_path: /downloads/
+
+  media_management: &media_management
+    deleteEmptyFolders: true
+    rescanAfterRefresh: afterManual
+
+  ui_config: &ui_config
+    firstDayOfWeek: 1
+    calendarWeekColumnHeader: ddd DD/MM
+    shortDateFormat: DD MMM YYYY
+    longDateFormat: "dddd, D MMMM YYYY"
+    uiLanguage: {{ .Values.language }}
+
+  indexer_config: &indexer_config
+    rss_sync_interval: 15
+
+  delay_profiles: &delay_profiles
+    default:
+      enableUsenet: false
+      enableTorrent: true
+      preferredProtocol: torrent
+
+  jellyfin_fields: &jellyfin_fields
+    host: {{ .Values.jellyfin.host }}
+    port: {{ .Values.jellyfin.port }}
+    api_key: !env JELLYFIN_API_KEY
+    notify: false
+    update_library: true

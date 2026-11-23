@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: flaresolverr
+description: FlareSolverr (Cloudflare bypass proxy for prowlarr)
+type: application
+version: 0.1.0
+appVersion: 'v3.5.2'

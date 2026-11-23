@@ -1,0 +1,26 @@
+{{- $gateway := .Values.global.gateway }}
+{{- $overrides := dict
+  "jellyfin" (dict "env" (list (dict "name" "JELLYFIN_PublishedServerUrl" "value" (printf "http://%s" (first .Values.hostnames)))))
+  "persistence" (dict "media" (dict "nfsServer" .Values.global.nfs.server))
+  "httpRoute" (dict "hostnames" .Values.hostnames "parentRefs" (list (dict "name" $gateway.name "namespace" $gateway.namespace)))
+  "nodeSelector" .Values.nodeSelector
+  "tolerations" .Values.tolerations
+}}
+apiVersion: helm.k0sproject.io/v1beta1
+kind: Chart
+metadata:
+  name: {{ .Values.name }}
+  namespace: kube-system
+  labels:
+    {{- include "mediacenter.labels" . | nindent 4 }}
+spec:
+  releaseName: {{ .Values.name }}
+  namespace: {{ .Release.Namespace }}
+  chartName: {{ .Values.chart }}
+  version: {{ .Values.version | quote }}
+  # helm upgrade --force tries to replace bound PVCs and fails (spec is immutable)
+  forceUpgrade: false
+  repository:
+    url: {{ .Values.repository }}
+  values: |
+    {{- toYaml (mergeOverwrite (deepCopy .Values.config) $overrides) | nindent 4 }}

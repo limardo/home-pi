@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    {{- include "datastores.labels" . | nindent 4 }}
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: {{ .Chart.Name }}
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics

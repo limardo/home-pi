@@ -1,0 +1,7 @@
+---
+apiVersion: v2
+name: soulsync
+description: SoulSync (music download and organisation)
+type: application
+version: 0.1.0
+appVersion: '3.6.6'

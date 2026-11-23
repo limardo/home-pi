@@ -1,0 +1,43 @@
+###################################################
+#     Home Assistant Main Configuration File      #
+###################################################
+
+# default_config without bluetooth, which needs NET_ADMIN/NET_RAW:
+# recheck this list against default_config's manifest on each upgrade
+assist_pipeline:
+cloud:
+conversation:
+dhcp:
+energy:
+file:
+go2rtc:
+history:
+homeassistant_alerts:
+logbook:
+media_source:
+mobile_app:
+my:
+ssdp:
+stream:
+sun:
+usage_prediction:
+usb:
+webhook:
+zeroconf:
+
+homeassistant:
+  name: Casa
+  unit_system: metric
+  time_zone: Europe/Rome
+  latitude: !secret latitude_home
+  longitude: !secret longitude_home
+  elevation: 53
+  auth_providers:
+    - type: homeassistant
+    - type: trusted_networks
+      trusted_networks: !secret trusted_networks
+  auth_mfa_modules:
+    - type: totp
+  external_url: !secret external_url
+  internal_url: !secret internal_url
+  packages: !include_dir_named integrations

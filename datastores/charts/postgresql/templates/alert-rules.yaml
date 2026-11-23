@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-alert-rules
+  labels:
+    {{- include "datastores.labels" . | nindent 4 }}
+    grafana_alert: "1"
+data:
+  postgresql.yaml: |-
+    {{- .Files.Get "files/alert-rules.yaml" | nindent 4 }}

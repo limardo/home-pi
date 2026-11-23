@@ -1,0 +1,62 @@
+---
+global:
+  blackbox:
+    prober: blackbox.example.local:9115
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+image:
+  repository: ghcr.io/koenkk/zigbee2mqtt
+  pullPolicy: IfNotPresent
+
+service:
+  - name: http
+    port: 8080
+    protocol: TCP
+
+hostnames:
+  - zigbee2mqtt.example.local
+
+# The coordinator accepts one TCP connection: never more than one replica
+adapter:
+  port: tcp://192.168.x.x:6638
+  type: ember
+
+mqtt:
+  server: mqtt://mosquitto.{{ .Release.Namespace }}.svc.cluster.local:1883
+  user: zigbee2mqtt
+  # Key is the user name
+  passwordSecret: mosquitto-users
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+
+startupProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+  failureThreshold: 30
+livenessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+readinessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+
+storage:
+  storageClass: longhorn
+  size: 512Mi
+
+probe:
+  url: http://zigbee2mqtt.{{ .Release.Namespace }}.svc.cluster.local:8080

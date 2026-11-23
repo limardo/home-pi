@@ -1,0 +1,18 @@
+views:
+  - title: Home
+    type: sections
+    max_columns: 2
+    header:
+      layout: responsive
+      badges_position: top
+      badges_wrap: wrap
+      card:
+        type: markdown
+        text_only: true
+        content: "# Ciao {{ user }}"
+    sections:
+      - !include lovelace/sections/climate.yaml
+      - !include lovelace/sections/controls.yaml
+      - !include lovelace/sections/security.yaml
+      - !include lovelace/sections/media.yaml
+      - !include lovelace/sections/system.yaml

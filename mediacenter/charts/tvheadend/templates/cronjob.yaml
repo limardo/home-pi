@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}-epg
+  labels:
+    {{- include "mediacenter.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.epg.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        # No selectorLabels: the tvheadend Service must not select these pods
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+            - name: epg
+              image: {{ .Values.epg.image }}
+              env:
+                - name: EPG_URLS
+                  value: {{ join " " .Values.epg.urls | quote }}
+              # tv_grab_file concatenates every *.xml in config/data, so the sources are merged into one <tv>
+              command:
+                - sh
+                - -c
+                - |
+                  set -eo pipefail
+                  mkdir -p /config/data
+                  {
+                    echo '<?xml version="1.0" encoding="UTF-8"?>'
+                    echo '<tv>'
+                    for url in $EPG_URLS; do
+                      case "$url" in
+                        *.gz) curl -fsSL "$url" | gzip -d ;;
+                        *) curl -fsSL "$url" ;;
+                      esac | sed -E '/<\?xml/d; /<!DOCTYPE/d; s#<tv( [^>]*)?>##; s#</tv>##'
+                    done
+                    echo '</tv>'
+                  } > /config/data/epg.xml.tmp
+                  mv /config/data/epg.xml.tmp /config/data/epg.xml
+              resources:
+                {{- toYaml .Values.epg.resources | nindent 16 }}
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  subPath: config
+          volumes:
+            - name: config
+              nfs:
+                server: {{ .Values.global.nfs.server }}
+                path: {{ .Values.nfs.path }}

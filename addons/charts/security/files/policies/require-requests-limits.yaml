@@ -1,0 +1,34 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-requests-limits
+  labels:
+    {{- include "addons.labels" (dict "ctx" . "name" "kyverno-policies") | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: Richiedi resources.requests e limits
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/description: Tutti i container devono dichiarare CPU e memoria in requests e limits.
+spec:
+  validationActions:
+    - Audit
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+        operations: ["CREATE", "UPDATE"]
+  matchConditions:
+    - name: exclude-system-namespaces
+      expression: {{ include "security.kyverno-policies.excludeNamespaces" . | quote }}
+  validations:
+    - expression: |
+        object.spec.containers.all(c,
+          {{- include "security.kyverno-policies.hasResources" . | nindent 10 }}
+        )
+      message: Tutti i container devono dichiarare resources.requests e resources.limits per CPU e memoria.
+    - expression: |
+        !has(object.spec.initContainers) ||
+        object.spec.initContainers.all(c,
+          {{- include "security.kyverno-policies.hasResources" . | nindent 10 }}
+        )
+      message: Tutti gli initContainer devono dichiarare resources.requests e resources.limits per CPU e memoria.

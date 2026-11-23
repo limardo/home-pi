@@ -1,0 +1,16 @@
+[minipc]
+192.168.x.1 hostname_name=minipc-1
+
+[raspberry]
+192.168.x.2 hostname_name=raspberry-1
+
+[banana]
+192.168.x.3 hostname_name=banana-1 os_data_disk=/dev/<disk>
+192.168.x.4 hostname_name=banana-2 os_data_disk=/dev/<disk> os_data_disk_mount=/var/lib/k0s/etcd
+
+[k0s_controller]
+192.168.x.4
+
+[k0s_worker]
+192.168.x.1 worker_profile=minipc-1
+192.168.x.3 worker_profile=bpi-m5

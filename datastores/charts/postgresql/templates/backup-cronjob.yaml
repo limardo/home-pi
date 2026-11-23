@@ -1,0 +1,94 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Chart.Name }}-backup
+  labels:
+    {{- include "datastores.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  timeZone: Europe/Rome
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            {{- include "datastores.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: Never
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+            - name: pg-dump
+              image: {{ .Values.imageName }}
+              env:
+                # A replica, so the dump does not load the primary
+                - name: PGHOST
+                  value: {{ .Chart.Name }}-ro
+                - name: PGSSLMODE
+                  value: require
+                - name: PGDATABASE
+                  value: postgres
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Chart.Name }}-backup
+                      key: username
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Chart.Name }}-backup
+                      key: password
+                - name: RETENTION_DAYS
+                  value: {{ .Values.backup.retentionDays | quote }}
+              command:
+                - bash
+                - -c
+                - |
+                  set -uo pipefail
+                  today=$(date +%F)
+                  dir=/backup/$today
+                  mkdir -p "$dir"
+                  failed=0
+                  for db in $(psql -tAc "select datname from pg_database where datallowconn and not datistemplate and datname <> 'postgres'"); do
+                    if pg_dump -Fc -d "$db" -f "$dir/$db.dump.tmp"; then
+                      mv "$dir/$db.dump.tmp" "$dir/$db.dump"
+                      echo "ok $db $(du -h "$dir/$db.dump" | cut -f1)"
+                    else
+                      rm -f "$dir/$db.dump.tmp"; echo "FAILED $db"; failed=1
+                    fi
+                  done
+                  cutoff=$(date -d "-$RETENTION_DAYS days" +%F)
+                  for d in /backup/*/; do
+                    name=$(basename "$d")
+                    if [[ "$name" < "$cutoff" || "$name" == "$cutoff" ]]; then rm -rf "$d"; echo "removed $name"; fi
+                  done
+                  exit $failed
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          volumes:
+            - name: backup
+              nfs:
+                server: {{ .Values.global.nfs.server }}
+                path: {{ .Values.backup.nfsPath }}

@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "apps.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "apps.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "apps.labels" . | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SLSKD_REMOTE_CONFIGURATION
+              value: "true"
+            - name: SLSKD_NO_HTTPS
+              value: "true"
+            - name: SLSKD_HTTP_PORT
+              value: {{ .Values.http.port | quote }}
+            - name: SLSKD_DOWNLOADS_DIR
+              value: /downloads
+            - name: SLSKD_SHARED_DIR
+              value: /music
+            - name: SLSKD_SHARE_CACHE_STORAGE_MODE
+              value: Disk
+            - name: SLSKD_SHARE_CACHE_RETENTION
+              value: "1440"
+            - name: SLSKD_SLSK_DESCRIPTION
+              value: {{ .Values.settings.description | quote }}
+            - name: SLSKD_SHARE_FILTER
+              value: {{ join ";" .Values.settings.shareFilters | quote }}
+            - name: SLSKD_UPLOAD_SLOTS
+              value: {{ .Values.settings.upload.slots | quote }}
+            - name: SLSKD_UPLOAD_SPEED_LIMIT
+              value: {{ .Values.settings.upload.speedLimit | quote }}
+            {{- if .Values.settings.metrics }}
+            - name: SLSKD_METRICS
+              value: "true"
+            - name: SLSKD_METRICS_NO_AUTH
+              value: "true"
+            {{- end }}
+          envFrom:
+            - secretRef:
+                name: slskd-secrets
+          ports:
+            - name: http
+              containerPort: {{ .Values.http.port }}
+              protocol: TCP
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: downloads
+              mountPath: /downloads
+            - name: music
+              mountPath: /music
+              readOnly: true
+      volumes:
+        - name: app
+          persistentVolumeClaim:
+            claimName: {{ .Chart.Name }}
+        - name: downloads
+          nfs:
+            server: {{ .Values.global.nfs.server }}
+            path: {{ .Values.nfs.downloadsPath }}
+        - name: music
+          nfs:
+            server: {{ .Values.global.nfs.server }}
+            path: {{ .Values.nfs.sharedPath }}
+            readOnly: true

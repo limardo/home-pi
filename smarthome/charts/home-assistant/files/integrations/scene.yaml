@@ -1,0 +1,4 @@
+---
+
+scene ui: !include ../scenes.yaml
+scene yaml: !include_dir_merge_list ../scenes

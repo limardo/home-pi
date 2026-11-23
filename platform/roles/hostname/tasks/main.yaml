@@ -1,0 +1,15 @@
+---
+
+- name: Gather status of cloud init
+  become: true
+  community.general.cloud_init_data_facts:
+    filter: status
+  register: hostname_cloud_init
+
+- name: Cloud-init hostname
+  ansible.builtin.import_tasks: cloud-init.yaml
+  when: hostname_cloud_init.cloud_init_data_facts.status | length | bool
+
+- name: Manual hostname
+  ansible.builtin.import_tasks: manual.yaml
+  when: not (hostname_cloud_init.cloud_init_data_facts.status | length | bool)

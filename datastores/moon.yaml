@@ -1,0 +1,93 @@
+---
+$schema: https://moonrepo.dev/schemas/project.json
+language: bash
+project:
+  description: Shared datastores (PostgreSQL, ...) for the apps
+  title: datastores
+dependsOn:
+  - addons
+tasks:
+  template:
+    inputs:
+      - '**/*.{yaml,yml,tpl}'
+    command: helm
+    args:
+      - template
+      - --namespace=datastores
+      - --debug
+      - --values=values.yaml
+      - --values=values.local.yaml
+      - datastores
+      - .
+    toolchains: system
+
+  build:
+    outputs:
+      - datastores-*.tgz
+    command: helm
+    args:
+      - package
+      - --namespace=datastores
+      - --debug
+      - .
+    inputs:
+      - '**/*.{yaml,yml,tpl}'
+    toolchains: system
+
+  deploy:
+    options:
+      cache: false
+    script: helm install --namespace=datastores --create-namespace --values=values.yaml --values=values.local.yaml datastores ./datastores-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  update:
+    options:
+      cache: false
+    script: helm upgrade --namespace=datastores --reset-then-reuse-values --values=values.yaml --values=values.local.yaml datastores ./datastores-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system
+
+  format:
+    options:
+      cache: false
+      affectedFiles:
+        pass: args
+        passInputsWhenNoMatch: true
+    command: yamlfmt
+    inputs:
+      - '**/*.{yaml,yml}'
+      - '!**/templates/**'
+    toolchains: unstable_uv
+
+  lint:
+    options:
+      cache: false
+    command: helm
+    args:
+      - lint
+      - .
+    toolchains: system
+
+  test:
+    options:
+      cache: false
+    command: helm
+    args:
+      - test
+      - datastores
+    toolchains: system
+
+  destroy:
+    options:
+      cache: false
+    command: helm
+    args:
+      - uninstall
+      - --namespace=datastores
+      - datastores
+    toolchains: system
+
+  clean:
+    options:
+      cache: false
+    script: rm -rf ./datastores-$(yq ".version" ./Chart.yaml).tgz
+    toolchains: system

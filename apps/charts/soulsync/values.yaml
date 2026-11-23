@@ -1,0 +1,58 @@
+---
+global:
+  nfs:
+    server: 192.168.x.x
+  gateway:
+    name: gateway
+    namespace: gateway-namespace
+
+image:
+  repository: boulderbadgedad/soulsync
+  pullPolicy: IfNotPresent
+
+http:
+  port: 8008
+hostnames:
+  - soulsync.example.local
+
+resources:
+  limits:
+    cpu: 3000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+startupProbe:
+  httpGet:
+    path: /api/setup/status
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 30
+livenessProbe:
+  httpGet:
+    path: /api/setup/status
+    port: http
+  periodSeconds: 30
+  timeoutSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /api/setup/status
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+
+storage:
+  storageClass: longhorn
+  size: 2Gi
+
+nfs:
+  downloadsPath: /path/to/downloads
+  musicPath: /path/to/music
+
+probe:
+  url: http://soulsync.{{ .Release.Namespace }}.svc.cluster.local:8008
