@@ -1,0 +1,14 @@
+---
+
+argument_specs:
+  main:
+    short_description: Prometheus node exporter as a systemd service, for hosts outside Kubernetes
+    options:
+      node_exporter_textfile_dir:
+        type: str
+        default: /var/lib/prometheus/node-exporter
+        description: Folder read by the textfile collector.
+      node_exporter_systemd_units:
+        type: str
+        default: k0s.*
+        description: Regex of the systemd units exported by the systemd collector.

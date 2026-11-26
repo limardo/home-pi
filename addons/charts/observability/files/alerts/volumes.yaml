@@ -1,0 +1,33 @@
+---
+groups:
+  - name: volumes
+    rules:
+      - alert: PersistentVolumeFull
+        expr: |
+          max by (namespace, persistentvolumeclaim) (
+            kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes
+          ) > 0.85
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} pieno al {{ $value | humanizePercentage }}
+          description: Il volume {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} supera l'85 %
+          runbook: Pulisci o allarga il PVC, dentro il budget Longhorn del nodo
+
+      - alert: PersistentVolumeFillingUp
+        expr: |
+          max by (namespace, persistentvolumeclaim) (
+            kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes
+          ) < 0.40
+          and
+          max by (namespace, persistentvolumeclaim) (
+            predict_linear(kubelet_volume_stats_available_bytes[6h], 24 * 3600)
+          ) < 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} pieno entro 24 ore
+          description: Al ritmo delle ultime 6 ore il volume {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} si riempie entro un giorno
+          runbook: Trova cosa scrive (download, backup interni, log) prima che si riempia

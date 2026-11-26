@@ -1,0 +1,23 @@
+---
+groups:
+  - name: probes
+    rules:
+      - alert: ServiceDown
+        expr: probe_success == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.target }} non risponde'
+          description: Il probe di {{ $labels.target }} ({{ $labels.instance }}) fallisce da 3 minuti
+          runbook: Log del pod, poi lo stato dei nodi
+
+      - alert: BlackboxExporterDown
+        expr: up{job="prometheus-blackbox-exporter"} == 0 or absent(up{job="prometheus-blackbox-exporter"})
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Blackbox exporter non raccolto
+          description: Prometheus non legge il blackbox exporter; i probe e ServiceDown tacciono
+          runbook: Targets nella UI di Prometheus, poi lo stato del pod prometheus-blackbox-exporter

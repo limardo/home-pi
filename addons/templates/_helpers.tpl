@@ -163,3 +163,92 @@ spec:
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{- define "addons.alertRules" -}}
+{{- $files := .ctx.Files.Glob "files/alerts/*.yaml" }}
+{{- if $files }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .ctx.Chart.Name }}-alert-rules
+  namespace: {{ include "addons.namespace" .ctx }}
+  labels:
+    {{- include "addons.labels" (dict "ctx" .ctx "name" (printf "%s-alert-rules" .ctx.Chart.Name)) | nindent 4 }}
+    grafana_alert: "1"
+data:
+  {{- range $path, $_ := $files }}
+  {{- $enabled := true }}
+  {{- range $.ctx.Values.charts }}
+  {{- if eq .name (base $path | trimSuffix ".yaml") }}{{ $enabled = .enabled }}{{ end }}
+  {{- end }}
+  {{ $.ctx.Chart.Name }}-{{ base $path }}: |-
+    {{- include "addons.grafanaRules" (dict "content" ($.ctx.Files.Get $path) "folder" $.folder "enabled" $enabled) | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "addons.grafanaRules" -}}
+apiVersion: 1
+{{- /* Grafana keeps provisioned rules whose file is gone */}}
+{{- if not .enabled }}
+deleteRules:
+{{- range (fromYaml .content).groups }}
+{{- range .rules }}
+  - orgId: 1
+    uid: {{ .alert | kebabcase | trunc 40 | toJson }}
+{{- end }}
+{{- end }}
+{{- else }}
+groups:
+{{- range (fromYaml .content).groups }}
+  - orgId: 1
+    name: {{ .name | toJson }}
+    folder: {{ $.folder | toJson }}
+    interval: {{ .interval | default "1m" }}
+    rules:
+    {{- range .rules }}
+      - uid: {{ .alert | kebabcase | trunc 40 | toJson }}
+        title: {{ .alert | toJson }}
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            relativeTimeRange:
+              from: 600
+              to: 0
+            model:
+              refId: A
+              expr: {{ .expr | toJson }}
+              instant: true
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              {{- /* Fires on any series A returns: a missing metric needs absent() in expr */}}
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1e+300
+        noDataState: OK
+        execErrState: Error
+        for: {{ .for | default "0s" }}
+        labels: {{ .labels | default dict | toJson }}
+        {{- $annotations := dict }}
+        {{- range $key, $text := .annotations }}
+        {{- $_ := set $annotations $key (regexReplaceAll "\\$value\\b" $text "$$values.B.Value") }}
+        {{- end }}
+        annotations: {{ $annotations | toJson }}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

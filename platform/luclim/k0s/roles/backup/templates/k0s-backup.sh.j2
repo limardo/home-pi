@@ -20,3 +20,11 @@ rmdir "$mnt/.tmp"
 
 ls -1t "$mnt"/k0s_backup_*.tar.gz | tail -n +{{ backup_retention + 1 }} | xargs -r rm -f
 echo "k0s backup done, $(ls -1 "$mnt"/k0s_backup_*.tar.gz | wc -l) archives kept"
+
+# Read by the node exporter textfile collector; written atomically with mv
+prom="{{ backup_textfile_dir }}/k0s_backup.prom"
+if [[ -d "${prom%/*}" ]]; then
+  printf 'k0s_backup_last_success_timestamp_seconds %s\n' "$(date +%s)" \
+    > "${prom}.tmp"
+  mv "${prom}.tmp" "${prom}"
+fi

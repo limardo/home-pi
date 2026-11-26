@@ -1,0 +1,23 @@
+---
+groups:
+  - name: cert-manager
+    rules:
+      - alert: CertificateExpiringSoon
+        expr: (certmanager_certificate_expiration_timestamp_seconds - time()) / 86400 < 21
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: Certificato {{ $labels.name }} in scadenza
+          description: Il certificato {{ $labels.exported_namespace }}/{{ $labels.name }} scade tra meno di 21 giorni; cert-manager lo rinnova a 30, quindi il rinnovo sta fallendo
+          runbook: Eventi di Certificate, Order e Challenge; credenziali Route 53
+
+      - alert: CertificateNotReady
+        expr: certmanager_certificate_ready_status{condition="True"} == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Certificato {{ $labels.name }} non pronto
+          description: Il certificato {{ $labels.exported_namespace }}/{{ $labels.name }} non è Ready da 15 minuti
+          runbook: Eventi di Certificate, Order e Challenge; credenziali Route 53

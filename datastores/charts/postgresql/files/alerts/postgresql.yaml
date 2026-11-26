@@ -1,0 +1,26 @@
+---
+groups:
+  - name: postgresql
+    rules:
+      - alert: PostgresInstanceDown
+        # 3 is instances in values.yaml
+        expr: |
+          sum(cnpg_collector_up{namespace="datastores"}) < 3
+          or absent(cnpg_collector_up{namespace="datastores"})
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Istanza Postgres giù
+          description: Meno di 3 istanze del cluster postgresql in datastores rispondono da 10 minuti
+          runbook: kubectl cnpg status postgresql -n datastores; guarda se i pod vengono ricreati in loop
+
+      - alert: PostgresReplicationLag
+        expr: max by (pod) (cnpg_pg_replication_lag{namespace="datastores"}) > 300
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Replica Postgres {{ $labels.pod }} in ritardo
+          description: La replica {{ $labels.pod }} è indietro di {{ $value | humanizeDuration }}
+          runbook: Replica su un nodo lento o pieno; kubectl cnpg status postgresql -n datastores

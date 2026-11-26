@@ -1,0 +1,36 @@
+---
+groups:
+  - name: longhorn
+    rules:
+      - alert: LonghornVolumeDegraded
+        expr: longhorn_volume_robustness{state="degraded"} == 1
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: Volume Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} degradato
+          description: Il volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} ha meno repliche sane del previsto da 30 minuti
+          runbook: UI di Longhorn, repliche e nodo; spazio schedulabile sul nodo
+
+      - alert: LonghornVolumeFaulted
+        expr: longhorn_volume_robustness{state="faulted"} == 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Volume Longhorn {{ $labels.pvc_namespace }}/{{ $labels.pvc }} guasto
+          description: Il volume {{ $labels.pvc_namespace }}/{{ $labels.pvc }} non ha repliche utilizzabili
+          runbook: UI di Longhorn, salvage della replica più recente
+
+      - alert: LonghornNodeFull
+        expr: |
+          longhorn_node_storage_scheduled_bytes
+          / (longhorn_node_storage_capacity_bytes - longhorn_node_storage_reservation_bytes)
+          > 0.90
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: Longhorn su {{ $labels.node }} al {{ $value | humanizePercentage }} dello spazio utile
+          description: Su {{ $labels.node }} le nuove repliche presto non saranno schedulabili
+          runbook: Ridimensiona i PVC sul nodo o sposta repliche

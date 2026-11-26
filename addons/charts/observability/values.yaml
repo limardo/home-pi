@@ -65,6 +65,11 @@ charts:
           ingestion_rate_mb: 4
           ingestion_burst_size_mb: 8
           max_query_parallelism: 2
+          # The default list matches job="fluent-bit" first: every stream became one service in Logs Drilldown
+          discover_service_name:
+            - kubernetes_labels_app_kubernetes_io_name
+            - kubernetes_labels_app
+            - kubernetes_container_name
 
         ingester:
           chunk_encoding: snappy
@@ -144,6 +149,15 @@ charts:
     config:
       deploymentStrategy:
         type: Recreate
+
+      # Startup on SQLite over NFS, with alert provisioning, takes 2-3 minutes
+      startupProbe:
+        httpGet:
+          path: /api/health
+          port: 3000
+        periodSeconds: 10
+        timeoutSeconds: 10
+        failureThreshold: 60
 
       readinessProbe:
         httpGet:

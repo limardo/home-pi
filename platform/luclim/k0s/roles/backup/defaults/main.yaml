@@ -2,3 +2,4 @@
 
 backup_schedule: '*-*-* 02:30:00'
 backup_retention: 7
+backup_textfile_dir: /var/lib/prometheus/node-exporter

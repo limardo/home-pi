@@ -1,0 +1,71 @@
+---
+groups:
+  - name: backups
+    rules:
+      - alert: BackupMissing
+        expr: |
+          (
+            time() - kube_cronjob_status_last_successful_time{cronjob=~".+-backup"} > 26 * 3600
+            or
+            (
+              kube_cronjob_info{cronjob=~".+-backup"}
+              unless on (namespace, cronjob) kube_cronjob_status_last_successful_time
+            )
+            and on (namespace, cronjob) time() - kube_cronjob_created > 26 * 3600
+          )
+          unless on (namespace, cronjob) time() - kube_cronjob_status_last_successful_time > 50 * 3600
+        labels:
+          severity: warning
+        annotations:
+          summary: Backup {{ $labels.namespace }}/{{ $labels.cronjob }} mancante
+          description: Nessun backup riuscito di {{ $labels.cronjob }} nelle ultime 26 ore
+          runbook: kubectl logs dell'ultimo Job; il NAS è montato?
+
+      - alert: BackupMissingCritical
+        expr: time() - kube_cronjob_status_last_successful_time{cronjob=~".+-backup"} > 50 * 3600
+        labels:
+          severity: critical
+        annotations:
+          summary: Backup {{ $labels.namespace }}/{{ $labels.cronjob }} fermo da più di 2 giorni
+          description: Ultimo backup riuscito di {{ $labels.cronjob }} {{ $value | humanizeDuration }} fa
+          runbook: kubectl logs dell'ultimo Job; il NAS è montato?
+
+      - alert: CronJobFailed
+        expr: |
+          (
+            kube_job_status_start_time
+            * on (namespace, job_name) group_left (owner_name) kube_job_owner{owner_kind="CronJob"}
+            and on (namespace, job_name) kube_job_status_failed > 0
+          )
+          > on (namespace, owner_name) group_left ()
+          label_replace(kube_cronjob_status_last_successful_time, "owner_name", "$1", "cronjob", "(.+)")
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: CronJob {{ $labels.namespace }}/{{ $labels.owner_name }} fallito
+          description: L'ultima esecuzione {{ $labels.job_name }} è fallita e non è seguita da un successo
+          runbook: kubectl -n {{ $labels.namespace }} logs job/{{ $labels.job_name }}
+
+      - alert: CronJobSuspended
+        expr: kube_cronjob_spec_suspend == 1
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: CronJob {{ $labels.namespace }}/{{ $labels.cronjob }} sospeso
+          description: Il CronJob {{ $labels.cronjob }} è sospeso da più di un'ora
+          runbook: kubectl patch cronjob con suspend false, se la sospensione non è voluta
+
+      - alert: K0sBackupMissing
+        expr: |
+          time() - k0s_backup_last_success_timestamp_seconds{job="node-exporter"} > 26 * 3600
+          or node_systemd_unit_state{job="node-exporter",name="k0s-backup.service",state="failed"} == 1
+          or absent(k0s_backup_last_success_timestamp_seconds{job="node-exporter"})
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Backup di k0s mancante o fallito
+          description: k0s-backup su banana-4 è fallito o non riesce da più di 26 ore
+          runbook: Su banana-4 systemctl status k0s-backup e journalctl -u k0s-backup

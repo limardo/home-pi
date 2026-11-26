@@ -1,0 +1,35 @@
+---
+
+- name: Install the node exporter
+  become: true
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+    install_recommends: false
+
+- name: Configure the node exporter
+  become: true
+  ansible.builtin.template:
+    src: prometheus-node-exporter.j2
+    dest: /etc/default/prometheus-node-exporter
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart the node exporter
+
+- name: Create the textfile folder
+  become: true
+  ansible.builtin.file:
+    path: '{{ node_exporter_textfile_dir }}'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Enable the node exporter
+  become: true
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    state: started
+    enabled: true
+  ignore_errors: '{{ ansible_check_mode }}'

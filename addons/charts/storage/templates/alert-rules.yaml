@@ -1,0 +1,1 @@
+{{ include "addons.alertRules" (dict "ctx" . "folder" "addons") }}

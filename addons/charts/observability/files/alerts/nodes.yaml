@@ -1,0 +1,108 @@
+---
+groups:
+  - name: nodes
+    rules:
+      - alert: NodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Nodo {{ $labels.node }} non pronto
+          description: Il nodo {{ $labels.node }} non è Ready da 5 minuti
+          runbook: ssh sul nodo, poi power-cycle; controlla che la SD sia ben inserita
+
+      - alert: NodeRootReadOnly
+        expr: |
+          (node_filesystem_readonly{job="node-exporter",mountpoint="/"} == 1)
+          * on (instance) group_left (nodename) node_uname_info{job="node-exporter"}
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Root in sola lettura su {{ $labels.nodename }}
+          description: Il filesystem / di {{ $labels.nodename }} è passato in sola lettura
+          runbook: Drain del nodo, poi fsck della SD (procedura SD repair)
+
+      - alert: NodeFilesystemFull
+        expr: |
+          (
+            node_filesystem_avail_bytes{job="node-exporter",mountpoint=~"/|/var/log|/srv/data|/var/lib/k0s/etcd"}
+            / node_filesystem_size_bytes{job="node-exporter"} < 0.10
+          )
+          * on (instance) group_left (nodename) node_uname_info{job="node-exporter"}
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: '{{ $labels.mountpoint }} quasi pieno su {{ $labels.nodename }}'
+          description: Su {{ $labels.nodename }} resta il {{ $value | humanizePercentage }} di {{ $labels.mountpoint }}
+          runbook: du sulla cartella; per /var/log controlla armbian-ramlog
+
+      - alert: NodeTemperatureHigh
+        expr: |
+          (max by (instance) (node_hwmon_temp_celsius{job="node-exporter"}) > 75)
+          * on (instance) group_left (nodename) node_uname_info{job="node-exporter"}
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: '{{ $labels.nodename }} a {{ $value }} °C'
+          description: '{{ $labels.nodename }} supera 75 °C da 10 minuti'
+          runbook: Controlla ventilazione e carico; a 85 °C parte il throttling
+
+      - alert: NodeTemperatureCritical
+        expr: |
+          (max by (instance) (node_hwmon_temp_celsius{job="node-exporter"}) > 85)
+          * on (instance) group_left (nodename) node_uname_info{job="node-exporter"}
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.nodename }} a {{ $value }} °C'
+          description: '{{ $labels.nodename }} supera 85 °C e sta andando in throttling'
+          runbook: Spegni il nodo se la temperatura sale ancora
+
+      - alert: NodeMemoryPressure
+        expr: |
+          (
+            rate(node_pressure_memory_stalled_seconds_total{job="node-exporter",role!="controller"}[5m]) > 0.05
+            or
+            node_memory_MemAvailable_bytes{job="node-exporter",role!="controller"}
+            / node_memory_MemTotal_bytes{job="node-exporter"} < 0.08
+          )
+          * on (instance) group_left (nodename) node_uname_info{job="node-exporter"}
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Memoria sotto pressione su {{ $labels.nodename }}
+          description: Su {{ $labels.nodename }} la memoria disponibile è sotto l'8 % o i processi restano in attesa di memoria
+          runbook: kubectl top pods sul nodo; sposta o limita il pod più grande
+
+      - alert: ControllerMemoryPressure
+        expr: |
+          (
+            rate(node_pressure_memory_stalled_seconds_total{job="node-exporter",role="controller"}[5m]) > 0.05
+            or
+            node_memory_MemAvailable_bytes{job="node-exporter",role="controller"}
+            / node_memory_MemTotal_bytes{job="node-exporter"} < 0.05
+          )
+          * on (instance) group_left (nodename) node_uname_info{job="node-exporter"}
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: Memoria sotto pressione sul controller {{ $labels.nodename }}
+          description: Sul controller la memoria disponibile è sotto il 5 % o i processi restano in attesa di memoria; i lease dei controller scadono
+          runbook: Su banana-4 top dell'apiserver; guarda CRD e watch-cache
+
+      - alert: PodRestartLoop
+        expr: increase(kube_pod_container_status_restarts_total[1h]) > 3
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: '{{ $labels.namespace }}/{{ $labels.pod }} si riavvia in loop'
+          description: Il container {{ $labels.container }} si è riavviato {{ $value | printf "%.0f" }} volte nell'ultima ora
+          runbook: kubectl logs --previous; se sono controller con lease guarda prima la memoria di banana-4

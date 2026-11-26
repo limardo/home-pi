@@ -1,0 +1,8 @@
+---
+
+- name: Restart the node exporter
+  become: true
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    state: restarted
+  ignore_errors: '{{ ansible_check_mode }}'

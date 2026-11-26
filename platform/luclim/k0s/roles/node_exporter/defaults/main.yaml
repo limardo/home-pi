@@ -1,0 +1,4 @@
+---
+
+node_exporter_textfile_dir: /var/lib/prometheus/node-exporter
+node_exporter_systemd_units: k0s.*

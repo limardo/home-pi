@@ -1,0 +1,30 @@
+---
+# Provisioned policies replace the whole tree and lock it in the UI
+apiVersion: 1
+policies:
+  - orgId: 1
+    receiver: grafana-default-email
+    group_by:
+      - grafana_folder
+      - alertname
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 8h
+    routes:
+      - receiver: grafana-default-email
+        object_matchers:
+          - [severity, =, critical]
+      - receiver: grafana-default-email
+        object_matchers:
+          - [severity, =, warning]
+        active_time_intervals:
+          - daytime
+        repeat_interval: 24h
+muteTimes:
+  - orgId: 1
+    name: daytime
+    time_intervals:
+      - times:
+          - start_time: '07:00'
+            end_time: '23:00'
+        location: Europe/Rome

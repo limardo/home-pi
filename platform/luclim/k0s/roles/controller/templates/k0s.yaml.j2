@@ -95,6 +95,15 @@ spec:
                       periodSeconds: 15
                 ruleSelectorNilUsesHelmValues: false
                 serviceMonitorSelectorNilUsesHelmValues: false
+                # The controller is not a Kubernetes node, so the node-exporter DaemonSet misses it:
+                # same job name, so the node alerts cover it; role tells it apart without its IP
+                additionalScrapeConfigs:
+                  - job_name: node-exporter
+                    static_configs:
+                      - targets:
+                          - {{ ansible_host | default(inventory_hostname) }}:9100
+                        labels:
+                          role: controller
               # etcd, scheduler and controller-manager run inside k0s: their metrics come from the
               # k0s pushgateway (--enable-metrics-scraper); honorLabels keeps job and instance
               additionalServiceMonitors:

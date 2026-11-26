@@ -20,3 +20,7 @@ argument_specs:
         type: int
         default: 7
         description: Number of archives kept, at least 3.
+      backup_textfile_dir:
+        type: str
+        default: /var/lib/prometheus/node-exporter
+        description: Node exporter textfile folder for the last success timestamp; skipped if missing.

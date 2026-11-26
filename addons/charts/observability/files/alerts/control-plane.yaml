@@ -1,0 +1,44 @@
+---
+groups:
+  - name: control-plane
+    rules:
+      - alert: TargetDown
+        expr: |
+          up{job=~"node-exporter|kube-state-metrics|k0s-pushgateway"} == 0
+          or absent(up{job="kube-state-metrics"})
+          or absent(up{job="k0s-pushgateway"})
+          or absent(up{job="node-exporter",role="controller"})
+          or label_replace(
+            count(kube_node_info) > count(up{job="node-exporter",role!="controller"}),
+            "job", "node-exporter", "", ""
+          )
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: Target {{ $labels.job }} non raccolto
+          description: Prometheus non legge uno o più target di {{ $labels.job }}; gli alert che ne dipendono tacciono
+          runbook: Targets nella UI di Prometheus, poi lo stato del pod o del servizio dell'exporter
+
+      - alert: APIServerDown
+        expr: up{job="apiserver"} == 0 or absent(up{job="apiserver"})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: apiserver non raggiungibile
+          description: Prometheus non raggiunge l'apiserver da 5 minuti
+          runbook: Su banana-4 k0s status, memoria e journalctl -u k0scontroller
+
+      - alert: EtcdDown
+        expr: |
+          etcd_server_has_leader{job="etcd"} == 0
+          or time() - push_time_seconds{job="etcd"} > 600
+          or absent(etcd_server_has_leader{job="etcd"})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: etcd senza leader o senza metriche
+          description: etcd su banana-4 non ha leader o k0s non ne spinge le metriche da più di 10 minuti
+          runbook: Su banana-4 k0s status e journalctl -u k0scontroller; spazio in /var/lib/k0s/etcd
